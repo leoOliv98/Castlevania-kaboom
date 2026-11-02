@@ -6,7 +6,75 @@ export async function cenaJogo(data = { lives: 3 }) {
 
     let currentHp = 100;
     const maxHp = 100;
-    let currentLives = data.lives;
+    let currentLives = data.lives; 
+    let isPaused = false; 
+
+
+    const pauseGroup = add([
+        fixed(),
+        z(900)
+    ]);
+    
+    // Esconde o grupo logo após a criação
+    pauseGroup.hidden = true;
+
+    // Fundo escuro semi-transparente cobrindo a tela toda
+    pauseGroup.add([
+        rect(width(), height()),
+        color(10, 10, 15),
+        opacity(0.85)
+    ]);
+
+    // Título do Pause
+    pauseGroup.add([
+        text("JOGO PAUSADO", { size: 48 }),
+        pos(center().x, center().y - 100),
+        anchor("center"),
+        color(220, 220, 220)
+    ]);
+
+    // Opção 1: Retornar ao jogo
+    const btnResume = pauseGroup.add([
+        text("▶ Pressione [ ESC ] para Retornar", { size: 22 }),
+        pos(center().x, center().y - 10),
+        anchor("center"),
+        color(100, 255, 100)
+    ]);
+
+    // Opção 2: Voltar para o menu
+    const btnMenu = pauseGroup.add([
+        text("🏠 Pressione [ M ] para ir ao Menu", { size: 22 }),
+        pos(center().x, center().y + 40),
+        anchor("center"),
+        color(255, 100, 100)
+    ]);
+
+    // Função para alternar o estado de pausa
+    function togglePause() {
+        isPaused = !isPaused;
+
+        if (isPaused) {
+            pauseGroup.hidden = false;
+            player.paused = true;
+            if (enemy) enemy.paused = true;
+        } else {
+            pauseGroup.hidden = true;
+            player.paused = false;
+            if (enemy) enemy.paused = false;
+        }
+    }
+
+    // Tecla ESC alterna o pause
+    onKeyPress("escape", () => {
+        togglePause();
+    });
+
+    // Se estiver pausado, a tecla 'm' envia de volta ao menu
+    onKeyPress("m", () => {
+        if (isPaused) {
+            go("menu");
+        }
+    });
 
     const response = await fetch("frontend/assets/levels/level-1.tmj");
     const mapJson = await response.json();
