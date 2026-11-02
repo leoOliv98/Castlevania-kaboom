@@ -33,13 +33,27 @@ export async function cenaJogo(data = { lives: 3 }) {
 
     const objectLayer = mapJson.layers.find(layer => layer.type === "objectgroup");
     let spawnPlayerX = 150, spawnPlayerY = 100;
-    let spawnEnemyX = 500, spawnEnemyY = 100;
+    
+    // Vamos criar uma lista (array) para guardar as posições de todos os inimigos
+    let inimigosSpawns = [];
 
     if (objectLayer && objectLayer.objects) {
-        const pObj = objectLayer.objects.find(obj => obj.name === "player_spawn");
+        // Pega o spawn do jogador
+        const pObj = objectLayer.objects.find(obj => obj.name === "player-spawn");
         if (pObj) { spawnPlayerX = pObj.x; spawnPlayerY = pObj.y; }
-        const eObj = objectLayer.objects.find(obj => obj.name === "enemy_spawn");
-        if (eObj) { spawnEnemyX = eObj.x; spawnEnemyY = eObj.y; }
+
+        // Pega TODOS os objetos que têm o nome "enemy_spawn" no Tiled
+        const eObjs = objectLayer.objects.filter(obj => obj.name === "enemy-spawn");
+        
+        // Se encontrou algum, adiciona na nossa lista de coordenadas
+        if (eObjs.length > 0) {
+            eObjs.forEach(e => {
+                inimigosSpawns.push({ x: e.x, y: e.y });
+            });
+        } else {
+            // Caso você esqueça de colocar no Tiled, coloca um padrão para não quebrar
+            inimigosSpawns.push({ x: 500, y: 100 });
+        }
     }
 
     add([ sprite("background_fase1"), pos(-200, -300), z(-100), scale(3) ]);
@@ -51,8 +65,11 @@ export async function cenaJogo(data = { lives: 3 }) {
 
     // INSTANCIAÇÃO DAS ENTIDADES MODULARIZADAS
     const player = criarJogador(spawnPlayerX, spawnPlayerY);
-    const deslocamentoX = 450; 
-    const enemy = criarEsqueleto(spawnEnemyX + deslocamentoX, spawnEnemyY, larguraTotalMapa);
+    //const deslocamentoX = 450; 
+    // Cria um esqueleto para cada ponto "enemy_spawn" criado no Tiled Editor!
+    inimigosSpawns.forEach(spawn => {
+        criarEsqueleto(spawn.x, spawn.y, larguraTotalMapa);
+    });
 
     // HUD FIXO
     add([ rect(320, 90), pos(15, 15), color(0, 0, 0), opacity(0.6), fixed(), z(100) ]);

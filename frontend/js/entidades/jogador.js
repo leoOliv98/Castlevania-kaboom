@@ -47,7 +47,8 @@ export function criarJogador(spawnX, spawnY) {
 
     // SISTEMA DE ATAQUE (Tecla Z)
     onKeyPress("z", () => {
-        if (player.isAttacking || !player.isGrounded()) return;
+        // Removemos a checagem !player.isGrounded() para permitir o ataque pulando
+        if (player.isAttacking) return;
 
         const estaViradoEsquerda = player.flipX;
 
@@ -55,9 +56,7 @@ export function criarJogador(spawnX, spawnY) {
         player.use(sprite("player_ataque")); 
         player.play("ataque");
 
-        // Aumenta temporariamente a escala apenas para o sprite de ataque (ajuste o valor 0.48 se precisar de mais ou menos)
         player.scale = vec2(0.4); 
-
         player.flipX = estaViradoEsquerda;
 
         const direcaoX = estaViradoEsquerda ? -40 : 40;
