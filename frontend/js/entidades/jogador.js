@@ -6,42 +6,85 @@ export function criarJogador(spawnX, spawnY) {
         body({ maxVel: 800 }),
         scale(0.35),
         anchor("center"),
-        "player"
+        "player",
+        { isAttacking: false } // Novo estado para controlar o ataque
     ]);
 
     const SPEED = 300;
     const JUMP_FORCE = 1100;
 
+    // CONTROLES DE MOVIMENTO (Ignora se estiver atacando)
     onKeyDown("left", () => {
+        if (player.isAttacking) return; 
         player.move(-SPEED, 0);
         player.flipX = true;
-        if (player.isGrounded() && player.curAnim() !== "walk") {
-            player.play("walk");
-        }
+        ultimaDirecao = true; // Salva que ele está olhando para a esquerda
+        if (player.isGrounded() && player.curAnim() !== "walk") player.play("walk");
     });
 
     onKeyDown("right", () => {
+        if (player.isAttacking) return;
         player.move(SPEED, 0);
         player.flipX = false;
-        if (player.isGrounded() && player.curAnim() !== "walk") {
-            player.play("walk");
-        }
+        ultimaDirecao = false; // Salva que ele está olhando para a direita
+        if (player.isGrounded() && player.curAnim() !== "walk") player.play("walk");
     });
 
     onKeyRelease("left", () => {
-        if (!isKeyDown("right")) player.play("idle");
+        if (!isKeyDown("right") && !player.isAttacking) player.play("idle");
     });
 
     onKeyRelease("right", () => {
-        if (!isKeyDown("left")) player.play("idle");
+        if (!isKeyDown("left") && !player.isAttacking) player.play("idle");
     });
 
     onKeyPress("up", () => {
-        if (player.isGrounded()) {
+        if (player.isGrounded() && !player.isAttacking) {
             player.jump(JUMP_FORCE);
             player.play("idle");
         }
     });
 
+    // SISTEMA DE ATAQUE (Tecla Z)
+    onKeyPress("z", () => {
+        if (player.isAttacking || !player.isGrounded()) return;
+
+        const estaViradoEsquerda = player.flipX;
+
+        player.isAttacking = true;
+        player.use(sprite("player_ataque")); 
+        player.play("ataque");
+
+        // Aumenta temporariamente a escala apenas para o sprite de ataque (ajuste o valor 0.48 se precisar de mais ou menos)
+        player.scale = vec2(0.4); 
+
+        player.flipX = estaViradoEsquerda;
+
+        const direcaoX = estaViradoEsquerda ? -40 : 40;
+        
+        add([
+            rect(40, 50),
+            pos(player.pos.x + direcaoX, player.pos.y),
+            anchor("center"),
+            area(),
+            opacity(0), 
+            lifespan(0.2), 
+            "ataqueJogador" 
+        ]);
+    });
+
+    // FIM DA ANIMAÇÃO: Volta para a imagem normal, restaura a escala e a direção correta
+    player.onAnimEnd((anim) => {
+        if (anim === "ataque") {
+            player.isAttacking = false;
+            player.use(sprite("player")); 
+            player.play("idle");
+            player.scale = vec2(0.35); // Restaura o tamanho padrão de quando ele anda/fica parado
+            player.flipX = ultimaDirecao; 
+        }
+    });
+
+    // Variável para lembrar a última direção que o jogador olhava (false = direita, true = esquerda)
+    let ultimaDirecao = false;
     return player;
 }

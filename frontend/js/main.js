@@ -32,6 +32,18 @@ loadSprite("esqueleto", "frontend/assets/sprites/Esqueleto-andando.png", {
     }
 });
 
+loadSprite("player_ataque", "frontend/assets/sprites/Personagem-Principal-atacando.png", {
+    sliceX: 5, // MUDE AQUI: Coloque o número exato de quadros da animação de ataque
+    sliceY: 1,
+    anims: { "ataque": { from: 0, to: 4, speed: 15, loop: false } }
+});
+
+loadSprite("esqueleto_ataque", "frontend/assets/sprites/Esqueleto-atacando.png", {
+    sliceX: 5, // MUDE AQUI: Coloque o número exato de quadros do esqueleto atacando
+    sliceY: 1,
+    anims: { "ataque": { from: 0, to: 4, speed: 10, loop: false } }
+});
+
 loadSprite("tile_18", "frontend/assets/levels/tilesets/musgo-topo-esquerda.png");
 loadSprite("tile_15", "frontend/assets/levels/tilesets/musgo-topo-1.png");
 loadSprite("tile_17", "frontend/assets/levels/tilesets/musgo-topo-direita.png");

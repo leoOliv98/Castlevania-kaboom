@@ -70,10 +70,24 @@ export async function cenaJogo(data = { lives: 3 }) {
 
     player.onCollide("deathZone", () => triggerDeath());
 
-    player.onCollide("enemy", () => {
-        currentHp = Math.max(0, currentHp - 30);
+    // NOVO: Quando o ataque do inimigo encosta no jogador (dano extra da espada do esqueleto)
+    player.onCollide("ataqueInimigo", () => {
+        currentHp = Math.max(0, currentHp - 40); // Tira 40 de HP no ataque
         hpBar.width = (currentHp / maxHp) * 160;
         if (currentHp <= 0) triggerDeath();
+    });
+
+    // NOVO: Quando o ataque do jogador encosta no esqueleto (Mata o esqueleto!)
+    onCollide("ataqueJogador", "enemy", (ataque, enemy) => {
+        destroy(enemy); // O esqueleto é destruído
+        
+        // Opcionalzinho de charme: Cria um efeitinho na morte
+        add([
+            text("MORTIS", { size: 12 }),
+            pos(enemy.pos.x, enemy.pos.y - 20),
+            color(200, 50, 50),
+            lifespan(0.5, { fade: 0.5 }) // Texto some flutuando
+        ]);
     });
 
     // ATUALIZAÇÃO DA CÂMERA
