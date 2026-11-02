@@ -30,4 +30,7 @@ export function cenaGameOver() {
 
     onKeyPress("enter", () => go("menu"));
     onKeyPress("space", () => go("menu"));
+    
+    // Adiciona o atalho da tecla ESC para voltar ao menu
+    onKeyPress("escape", () => go("menu"));
 }
