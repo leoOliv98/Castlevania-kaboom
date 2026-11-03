@@ -10,57 +10,68 @@ export async function cenaJogo(data = { lives: 3 }) {
     let isPaused = false; 
 
 
-    const pauseGroup = add([
+    // Criação dos elementos de pausa individualmente com .fixed() e .anchor("center")
+    // Usamos o centro absoluto da tela com center()
+    
+    const fundoPause = add([
+        rect(width(), height()),
+        color(10, 10, 15),
+        opacity(0.85),
         fixed(),
         z(900)
     ]);
-    
-    // Esconde o grupo logo após a criação
-    pauseGroup.hidden = true;
+    fundoPause.hidden = true; // Oculta logo após criar
 
-    // Fundo escuro semi-transparente cobrindo a tela toda
-    pauseGroup.add([
-        rect(width(), height()),
-        color(10, 10, 15),
-        opacity(0.85)
-    ]);
-
-    // Título do Pause
-    pauseGroup.add([
+    const tituloPause = add([
         text("JOGO PAUSADO", { size: 48 }),
         pos(center().x, center().y - 100),
         anchor("center"),
-        color(220, 220, 220)
+        color(220, 220, 220),
+        fixed(),
+        z(901)
     ]);
+    tituloPause.hidden = true;
 
-    // Opção 1: Retornar ao jogo
-    const btnResume = pauseGroup.add([
+    const btnResume = add([
         text("▶ Pressione [ ESC ] para Retornar", { size: 22 }),
         pos(center().x, center().y - 10),
         anchor("center"),
-        color(100, 255, 100)
+        color(100, 255, 100),
+        fixed(),
+        z(901)
     ]);
+    btnResume.hidden = true;
 
-    // Opção 2: Voltar para o menu
-    const btnMenu = pauseGroup.add([
+    const btnMenu = add([
         text("🏠 Pressione [ M ] para ir ao Menu", { size: 22 }),
         pos(center().x, center().y + 40),
         anchor("center"),
-        color(255, 100, 100)
+        color(255, 100, 100),
+        fixed(),
+        z(901)
     ]);
+    btnMenu.hidden = true
 
-    // Função para alternar o estado de pausa
+    // Função para alternar o estado de pausa (Corrigida para múltiplos inimigos)
     function togglePause() {
         isPaused = !isPaused;
 
+        // Alterna a visibilidade dos elementos de pausa
+        fundoPause.hidden = !isPaused;
+        tituloPause.hidden = !isPaused;
+        btnResume.hidden = !isPaused;
+        btnMenu.hidden = !isPaused;
+
         if (isPaused) {
-            pauseGroup.hidden = false;
             player.paused = true;
-            if (enemy) enemy.paused = true;
+            get("enemy").forEach(e => {
+                e.paused = true;
+            });
         } else {
-            pauseGroup.hidden = true;
             player.paused = false;
-            if (enemy) enemy.paused = false;
+            get("enemy").forEach(e => {
+                e.paused = false;
+            });
         }
     }
 
@@ -79,24 +90,43 @@ export async function cenaJogo(data = { lives: 3 }) {
     const response = await fetch("frontend/assets/levels/level-1.tmj");
     const mapJson = await response.json();
 
-    const tileLayer = mapJson.layers.find(layer => layer.type === "tilelayer");
-    const mapData = tileLayer.data;
     const mapWidth = mapJson.width;
     const tileW = mapJson.tilewidth;
     const tileH = mapJson.tileheight;
 
-    mapData.forEach((tileId, index) => {
-        if (tileId !== 0) {
-            const x = (index % mapWidth) * tileW;
-            const y = Math.floor(index / mapWidth) * tileH;
-            add([
-                sprite(`tile_${tileId}`),
-                pos(x, y),
-                area(),
-                body({ isStatic: true }),
-                "ground"
-            ]);
-        }
+    const tileLayers = mapJson.layers.filter(layer => layer.type === "tilelayer");
+
+    // NOVO: Lista exata dos IDs que devem ser tratados como chão ou paredes sólidas
+    const blocosSolidos = [31, 29, 28, 30, 27, 24, 22, 38, 4, 35];
+
+    tileLayers.forEach(layer => {
+        const mapData = layer.data;
+
+        mapData.forEach((tileId, index) => {
+            if (tileId !== 0) {
+                const x = (index % mapWidth) * tileW;
+                const y = Math.floor(index / mapWidth) * tileH;
+                
+                // O Kaboom confere se o tileId atual está dentro da nossa lista de blocos sólidos
+                const isSolid = blocosSolidos.includes(tileId);
+                
+                const componentes = [
+                    sprite(`tile_${tileId}`),
+                    pos(x, y),
+                    // Blocos sólidos ficam na mesma profundidade do jogador, decorações vão pro fundo
+                    z(isSolid ? 0 : -50) 
+                ];
+
+                // Adiciona a colisão APENAS se o tileId for um dos listados
+                if (isSolid) {
+                    componentes.push(area());
+                    componentes.push(body({ isStatic: true }));
+                    componentes.push("ground");
+                }
+
+                add(componentes);
+            }
+        });
     });
 
     const objectLayer = mapJson.layers.find(layer => layer.type === "objectgroup");
@@ -175,14 +205,20 @@ export async function cenaJogo(data = { lives: 3 }) {
         ]);
     });
 
-    // ATUALIZAÇÃO DA CÂMERA
+    // ATUALIZAÇÃO DA CÂMERA (Travada nos eixos X e Y)
     player.onUpdate(() => {
         const targetPos = player.pos;
         const currentCam = camPos();
         let newX = currentCam.x + (targetPos.x - currentCam.x) * 0.2;
         let newY = currentCam.y + (targetPos.y - currentCam.y) * 0.2;
 
+        // Limites horizontais (já funcionavam)
         newX = Math.max(1280 / 2, Math.min(larguraTotalMapa - (1280 / 2), newX));
-        camPos(newX, Math.round(newY));
+
+        // NOVOS: Limites verticais baseados na altura do mapa (20 tiles * 48 pixels = 960 pixels de altura total)
+        const alturaTotalMapa = mapJson.height * tileH; 
+        newY = Math.max(600 / 2, Math.min(alturaTotalMapa - (600 / 2), newY));
+
+        camPos(Math.round(newX), Math.round(newY));
     });
 }

@@ -1,73 +1,123 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<map version="1.10" tiledversion="1.12.2" orientation="orthogonal" renderorder="right-down" width="50" height="20" tilewidth="49" tileheight="48" infinite="0" nextlayerid="3" nextobjectid="7">
+<map version="1.10" tiledversion="1.12.2" orientation="orthogonal" renderorder="right-down" width="50" height="20" tilewidth="49" tileheight="48" infinite="0" nextlayerid="5" nextobjectid="11">
  <editorsettings>
   <export target="level-1.tmj" format="json"/>
  </editorsettings>
- <tileset firstgid="1" name="castelo" tilewidth="32" tileheight="32" tilecount="0" columns="0"/>
- <tileset firstgid="19" name="castelo" tilewidth="49" tileheight="48" tilecount="21" columns="0">
+ <tileset firstgid="1" name="level-1" tilewidth="49" tileheight="48" tilecount="38" columns="0">
   <grid orientation="orthogonal" width="1" height="1"/>
-  <tile id="7">
-   <image source="tilesets/chao-castelo-centro.png" width="49" height="48"/>
-  </tile>
-  <tile id="8">
-   <image source="tilesets/chao-castelo-centro-esquerda-1.png" width="49" height="48"/>
-  </tile>
-  <tile id="9">
-   <image source="tilesets/chao-castelo-topo-1.png" width="49" height="48"/>
-  </tile>
-  <tile id="10">
-   <image source="tilesets/chao-castelo-topo-2.png" width="49" height="48"/>
-  </tile>
-  <tile id="11">
-   <image source="tilesets/chao-castelo-topo-direita-1.png" width="49" height="48"/>
-  </tile>
-  <tile id="12">
-   <image source="tilesets/chao-castelo-topo-esquerda.png" width="49" height="48"/>
-  </tile>
-  <tile id="13">
-   <image source="tilesets/musgo-baixo-1.png" width="49" height="48"/>
-  </tile>
-  <tile id="14">
-   <image source="tilesets/musgo-baixo-2.png" width="49" height="48"/>
-  </tile>
-  <tile id="15">
-   <image source="tilesets/musgo-baixo-direita.png" width="49" height="48"/>
-  </tile>
-  <tile id="16">
-   <image source="tilesets/musgo-baixo-esquerda.png" width="49" height="48"/>
-  </tile>
-  <tile id="17">
-   <image source="tilesets/musgo-centro-1.png" width="49" height="48"/>
-  </tile>
-  <tile id="18">
-   <image source="tilesets/musgo-centro-2.png" width="49" height="48"/>
-  </tile>
-  <tile id="19">
-   <image source="tilesets/musgo-centro-direita.png" width="49" height="48"/>
-  </tile>
-  <tile id="20">
-   <image source="tilesets/musgo-centro-esquerda.png" width="49" height="48"/>
-  </tile>
-  <tile id="21">
-   <image source="tilesets/musgo-topo-1.png" width="49" height="48"/>
-  </tile>
-  <tile id="22">
-   <image source="tilesets/musgo-topo-2.png" width="49" height="48"/>
-  </tile>
-  <tile id="23">
-   <image source="tilesets/musgo-topo-direita.png" width="49" height="48"/>
-  </tile>
-  <tile id="24">
+  <tile id="30">
    <image source="tilesets/musgo-topo-esquerda.png" width="49" height="48"/>
   </tile>
-  <tile id="25">
-   <image source="tilesets/parede-lisa-castelo.png" width="49" height="48"/>
-  </tile>
-  <tile id="26">
-   <image source="tilesets/parede-tijolo-castelo.png" width="49" height="48"/>
+  <tile id="28">
+   <image source="tilesets/musgo-topo-2.png" width="49" height="48"/>
   </tile>
   <tile id="27">
+   <image source="tilesets/musgo-topo-1.png" width="49" height="48"/>
+  </tile>
+  <tile id="29">
+   <image source="tilesets/musgo-topo-direita.png" width="49" height="48"/>
+  </tile>
+  <tile id="9">
+   <image source="tilesets/gargula.png" width="49" height="48"/>
+  </tile>
+  <tile id="26">
+   <image source="tilesets/musgo-centro-esquerda.png" width="49" height="48"/>
+  </tile>
+  <tile id="23">
+   <image source="tilesets/musgo-centro-1.png" width="49" height="48"/>
+  </tile>
+  <tile id="24">
+   <image source="tilesets/musgo-centro-2.png" width="49" height="48"/>
+  </tile>
+  <tile id="21">
+   <image source="tilesets/musgo-baixo-direita.png" width="49" height="48"/>
+  </tile>
+  <tile id="18">
+   <image source="tilesets/janelinha.png" width="49" height="48"/>
+  </tile>
+  <tile id="22">
+   <image source="tilesets/musgo-baixo-esquerda.png" width="49" height="48"/>
+  </tile>
+  <tile id="19">
+   <image source="tilesets/musgo-baixo-1.png" width="49" height="48"/>
+  </tile>
+  <tile id="20">
+   <image source="tilesets/musgo-baixo-2.png" width="49" height="48"/>
+  </tile>
+  <tile id="25">
+   <image source="tilesets/musgo-centro-direita.png" width="49" height="48"/>
+  </tile>
+  <tile id="2">
+   <image source="tilesets/candelabro.png" width="49" height="48"/>
+  </tile>
+  <tile id="4">
+   <image source="tilesets/chao-castelo-centro-esquerda-1.png" width="49" height="48"/>
+  </tile>
+  <tile id="3">
+   <image source="tilesets/chao-castelo-centro.png" width="49" height="48"/>
+  </tile>
+  <tile id="5">
+   <image source="tilesets/chao-castelo-topo-1.png" width="49" height="48"/>
+  </tile>
+  <tile id="34">
    <image source="tilesets/parede-tijolo-castelo-2.png" width="49" height="48"/>
+  </tile>
+  <tile id="33">
+   <image source="tilesets/parede-tijolo-castelo.png" width="49" height="48"/>
+  </tile>
+  <tile id="8">
+   <image source="tilesets/chao-castelo-topo-esquerda.png" width="49" height="48"/>
+  </tile>
+  <tile id="6">
+   <image source="tilesets/chao-castelo-topo-2.png" width="49" height="48"/>
+  </tile>
+  <tile id="7">
+   <image source="tilesets/chao-castelo-topo-direita-1.png" width="49" height="48"/>
+  </tile>
+  <tile id="1">
+   <image source="tilesets/arco-esquerda.png" width="49" height="48"/>
+  </tile>
+  <tile id="0">
+   <image source="tilesets/arco-direita.png" width="49" height="48"/>
+  </tile>
+  <tile id="10">
+   <image source="tilesets/janela-baixo.png" width="49" height="48"/>
+  </tile>
+  <tile id="15">
+   <image source="tilesets/janela-topo.png" width="49" height="48"/>
+  </tile>
+  <tile id="14">
+   <image source="tilesets/janela-grande-topo-esquerda.png" width="49" height="48"/>
+  </tile>
+  <tile id="13">
+   <image source="tilesets/janela-grande-topo-direita.png" width="49" height="48"/>
+  </tile>
+  <tile id="31">
+   <image source="tilesets/parede-castelo-quebrada.png" width="49" height="48"/>
+  </tile>
+  <tile id="17">
+   <image source="tilesets/janela-vermelha-topo-castelo.png" width="49" height="48"/>
+  </tile>
+  <tile id="32">
+   <image source="tilesets/parede-lisa-castelo.png" width="49" height="48"/>
+  </tile>
+  <tile id="12">
+   <image source="tilesets/janela-grande-baixo-esquerda.png" width="49" height="48"/>
+  </tile>
+  <tile id="11">
+   <image source="tilesets/janela-grande-baixo-direita.png" width="49" height="48"/>
+  </tile>
+  <tile id="35">
+   <image source="tilesets/parede-vermelha2-castelo.png" width="49" height="48"/>
+  </tile>
+  <tile id="16">
+   <image source="tilesets/janela-vermelha-baixo-castelo.png" width="49" height="48"/>
+  </tile>
+  <tile id="36">
+   <image source="tilesets/parede-vermelha-castelo.png" width="49" height="48"/>
+  </tile>
+  <tile id="37">
+   <image source="tilesets/parede-vermelha-topo-castelo.png" width="49" height="48"/>
   </tile>
  </tileset>
  <layer id="1" name="Camada de Blocos 1" width="50" height="20">
@@ -75,29 +125,57 @@
 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
-0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
-0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
-0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,18,15,15,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
-0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,18,11,11,11,17,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
-0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,18,11,11,11,11,11,17,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
-0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,18,11,11,11,11,11,11,11,17,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
-16,16,16,17,0,0,0,0,0,0,0,0,0,0,18,11,11,11,11,11,11,11,11,11,17,0,0,0,0,0,0,0,18,17,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
-11,11,11,11,17,0,0,0,0,0,0,0,0,18,11,11,11,11,11,11,11,11,11,11,11,17,0,0,0,0,0,18,11,13,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
-11,11,11,11,11,17,0,0,0,0,0,0,18,11,11,11,11,11,11,11,11,11,11,11,11,11,17,0,0,0,18,11,11,13,0,0,0,0,0,0,0,0,0,18,15,15,15,15,15,15,
-11,11,11,11,11,11,17,0,0,0,0,18,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,17,0,0,14,11,11,13,0,0,0,0,0,0,0,0,18,11,11,11,11,11,11,11,
-11,11,11,11,11,11,11,15,15,15,15,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,15,15,11,11,11,11,15,15,15,15,15,15,15,15,11,11,11,11,11,11,11,11,
-11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,
-11,11,11,11,11,11,11,11,11,11,11,11,15,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,
-11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,
-11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,
-11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,
-11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11,11
+0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,32,32,32,32,
+0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,32,37,37,37,18,
+0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,32,37,37,37,37,17,
+0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,37,37,37,37,37,37,
+0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,37,37,35,35,35,37,
+31,29,28,30,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,37,35,34,34,34,35,
+23,20,21,26,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,35,34,34,34,34,34,
+0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,32,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
+0,0,0,0,0,4,4,4,4,0,0,0,0,0,0,0,0,0,0,35,35,35,35,0,0,0,0,0,0,0,0,0,32,37,0,0,0,0,0,0,0,35,35,0,0,0,0,0,0,0,
+0,0,0,0,0,33,33,33,33,0,0,0,0,0,0,0,0,0,0,33,33,33,33,0,0,0,0,0,0,0,0,0,32,36,0,0,0,0,0,0,0,34,34,35,0,0,0,0,0,0,
+0,0,0,0,0,33,15,14,33,0,0,0,0,0,0,0,0,0,33,33,33,33,33,33,33,0,0,0,0,0,0,32,37,36,0,0,0,0,35,35,0,0,0,0,0,0,0,0,0,0,
+0,0,0,0,0,33,13,12,33,0,0,0,0,0,0,0,0,33,33,33,33,33,33,33,33,0,0,0,0,0,0,36,36,36,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
+0,0,0,0,0,38,38,38,38,0,0,0,0,0,0,0,0,33,33,33,33,33,33,33,33,33,0,0,0,0,38,38,38,38,38,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
+0,0,0,0,0,37,36,36,36,38,0,0,38,0,0,0,0,33,33,33,33,33,33,33,33,33,0,0,0,0,0,0,36,36,36,0,0,38,0,0,0,0,0,0,0,0,0,0,0,0,
+0,0,0,0,0,37,37,36,37,37,38,0,37,0,0,35,0,33,35,35,35,35,35,35,33,33,0,0,35,0,0,0,0,36,36,38,38,36,0,0,0,0,0,0,0,0,0,0,0,0,
+31,29,28,30,0,36,37,37,37,36,37,38,37,0,0,34,0,35,34,34,34,34,34,34,35,35,35,0,34,0,0,0,0,0,36,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
+27,24,24,22,0,36,37,36,37,37,36,37,37,0,0,34,35,34,34,34,34,34,34,34,34,34,34,35,34,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0
 </data>
  </layer>
- <objectgroup id="2" name="Spawn">
-  <object id="1" name="player-spawn" x="58.6667" y="346.667"/>
-  <object id="2" name="enemy-spawn" x="942.667" y="154.667"/>
-  <object id="4" name="enemy-spawn" x="1580" y="392"/>
-  <object id="5" name="enemy-spawn" x="2213.33" y="440"/>
+ <layer id="3" name="Camada de Blocos 2" width="50" height="20">
+  <data encoding="csv">
+0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
+0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
+0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
+0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
+0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,10,10,0,0,
+0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,10,0,0,10,0,
+0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
+0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
+0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
+0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
+0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
+0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
+0,0,0,0,0,19,0,0,19,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
+0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
+0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,3,0,3,0,3,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
+0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
+0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
+0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
+0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
+0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0
+</data>
+ </layer>
+ <objectgroup id="4" name="Camada de Objetos 1">
+  <object id="1" name="player-spawn" x="60" y="780"/>
+  <object id="2" name="enemy-spawn" x="306" y="640"/>
+  <object id="3" name="enemy-spawn" x="938" y="728"/>
+  <object id="5" name="enemy-spawn" x="1032" y="716"/>
+  <object id="6" name="enemy-spawn" x="1126" y="726"/>
+  <object id="7" name="enemy-spawn" x="1536" y="632"/>
+  <object id="8" name="enemy-spawn" x="2318" y="252"/>
+  <object id="9" name="enemy-spawn" x="2376" y="250"/>
  </objectgroup>
 </map>

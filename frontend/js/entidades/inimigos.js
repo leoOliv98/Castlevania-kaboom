@@ -7,46 +7,69 @@ export function criarEsqueleto(spawnX, spawnY, larguraTotalMapa) {
         scale(0.4),
         anchor("center"),
         "enemy",
-        { dir: 1, speed: 70, isAttacking: false } // Novo estado
+        { dir: 1, speed: 70, isAttacking: false }
     ]);
 
+    let ultimoPulo = 0;
+
     enemy.onUpdate(() => {
-        // Se já está atacando, paralisa a caminhada
         if (enemy.isAttacking) return;
 
-        // Pega as coordenadas do Jogador
         const player = get("player")[0];
         
         if (player) {
             const distX = player.pos.x - enemy.pos.x;
             const distY = Math.abs(player.pos.y - enemy.pos.y);
 
-            // Verifica se o player está a menos de 60 pixels de distância e na mesma altura
+            // Quando o jogador chega perto, o esqueleto ataca com aviso visual imediato
             if (Math.abs(distX) < 60 && distY < 50) {
                 enemy.isAttacking = true;
-                enemy.use(sprite("esqueleto_ataque")); // Puxa sprite de ataque
-                enemy.play("ataque");
-
-                // Vira o esqueleto para a direção em que o jogador está
+                
+                // Vira para o jogador
                 enemy.dir = distX > 0 ? 1 : -1;
                 enemy.flipX = enemy.dir < 0;
 
-                // Hitbox do ataque do inimigo
-                add([
-                    rect(30, 50),
-                    pos(enemy.pos.x + (enemy.dir * 40), enemy.pos.y),
-                    anchor("center"),
-                    area(),
-                    opacity(0),
-                    lifespan(0.3),
-                    "ataqueInimigo"
-                ]);
-                return; // Para a lógica de patrulha
+                const direcaoAtk = enemy.dir;
+
+                enemy.use(sprite("esqueleto_ataque")); 
+                enemy.play("ataque");
+                enemy.flipX = (direcaoAtk < 0);
+
+                wait(0.25, () => {
+                    if (!enemy.exists()) return;
+
+                    const offsetHitbox = direcaoAtk * 40;
+
+                    add([
+                        rect(30, 50),
+                        pos(enemy.pos.x + offsetHitbox, enemy.pos.y),
+                        anchor("center"),
+                        area(),
+                        opacity(0),
+                        lifespan(0.2), 
+                        "ataqueInimigo"
+                    ]);
+                });
+
+                return; 
             }
         }
 
-        // Lógica de Patrulha (Se não estiver perto do jogador)
+        // Lógica de Patrulha normal
         enemy.move(enemy.speed * enemy.dir, 0);
+
+        // Detecção de buracos com Cooldown
+        if (enemy.isGrounded() && (time() - ultimoPulo > 3)) {
+            const aheadX = enemy.pos.x + (enemy.dir * 25);
+            const aheadY = enemy.pos.y + 20; 
+
+            const chaoAdiante = get("ground").some(g => g.hasPoint(vec2(aheadX, aheadY)));
+
+            if (!chaoAdiante) {
+                enemy.jump(850);
+                ultimoPulo = time();
+            }
+        }
 
         if (enemy.pos.x > larguraTotalMapa - 100) {
             enemy.dir = -1;
@@ -57,11 +80,30 @@ export function criarEsqueleto(spawnX, spawnY, larguraTotalMapa) {
         }
     });
 
+    // Inverte o movimento e dá um pulo ao colidir com uma parede lateral
     enemy.onCollide("ground", (ground, col) => {
         if (col.isLeft() || col.isRight()) {
             enemy.dir *= -1;
             enemy.flipX = (enemy.dir < 0);
+            
+            if (enemy.isGrounded() && (time() - ultimoPulo > 0.5)) {
+                enemy.jump(900); 
+                ultimoPulo = time();
+            }
         }
+    });
+
+    // Inverte o movimento e pula também se esbarrar em outro esqueleto/inimigo
+    enemy.onCollide("enemy", (outroInimigo, col) => {
+        if (col.isLeft() || col.isRight()) {
+            enemy.dir *= -1;
+            enemy.flipX = (enemy.dir < 0);
+        }
+    });
+
+    // NOVO: Se o esqueleto encostar na zona de morte lá embaixo, ele é destruído
+    enemy.onCollide("deathZone", () => {
+        destroy(enemy);
     });
 
     // FIM DA ANIMAÇÃO: Esqueleto volta a patrulhar

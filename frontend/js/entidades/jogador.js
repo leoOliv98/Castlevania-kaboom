@@ -13,20 +13,20 @@ export function criarJogador(spawnX, spawnY) {
     const SPEED = 300;
     const JUMP_FORCE = 1100;
 
-    // CONTROLES DE MOVIMENTO (Ignora se estiver atacando)
+    // CONTROLES DE MOVIMENTO (Bloqueados se estiver atacando ou pausado)
     onKeyDown("left", () => {
-        if (player.isAttacking) return; 
+        if (player.isAttacking || player.paused) return; 
         player.move(-SPEED, 0);
         player.flipX = true;
-        ultimaDirecao = true; // Salva que ele está olhando para a esquerda
+        ultimaDirecao = true;
         if (player.isGrounded() && player.curAnim() !== "walk") player.play("walk");
     });
 
     onKeyDown("right", () => {
-        if (player.isAttacking) return;
+        if (player.isAttacking || player.paused) return;
         player.move(SPEED, 0);
         player.flipX = false;
-        ultimaDirecao = false; // Salva que ele está olhando para a direita
+        ultimaDirecao = false;
         if (player.isGrounded() && player.curAnim() !== "walk") player.play("walk");
     });
 
