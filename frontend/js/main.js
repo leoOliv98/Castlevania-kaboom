@@ -11,6 +11,7 @@ kaboom({
     scale: 1,  
 });
 
+
 // CARREGAMENTO DOS ASSETS
 loadSprite("background_fase1", "frontend/assets/sprites/fundo-castelo.png");
 
@@ -93,6 +94,9 @@ tilesets.forEach((nomeImagem, index) => {
     const tileId = index + 1; // O Tiled soma 1 no ID das imagens
     loadSprite(`tile_${tileId}`, `frontend/assets/levels/tilesets/${nomeImagem}.png`);
 });
+
+// CARREGAMENTO DOS ÁUDIOS
+loadSound("musica_fase1", "frontend/assets/sounds/level-1.mp3");
 
 // REGISTRO DAS CENAS
 scene("menu", cenaMenu);

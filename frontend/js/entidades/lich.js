@@ -52,18 +52,23 @@ export function criarLich(spawnX, spawnY) {
             "projetilLich",
             { 
                 dir: direcao, 
-                velocidade: 250 
+                velocidade: 250,
+                tempoVida: 4 // Tempo de vida inicial em segundos
             }
         ]);
 
         proj.flipX = (direcao < 0);
 
         proj.onUpdate(() => {
+            // Se o jogo estiver pausado, o Kaboom congela o onUpdate automaticamente, 
+            // logo esse temporizador para de contar na hora certa!
             proj.pos.x += proj.dir * proj.velocidade * dt();
-        });
 
-        wait(4, () => {
-            if (proj.exists()) destroy(proj);
+            // Diminui o tempo de vida de acordo com o delta time do jogo
+            proj.tempoVida -= dt();
+            if (proj.tempoVida <= 0) {
+                if (proj.exists()) destroy(proj);
+            }
         });
     }
 

@@ -10,10 +10,14 @@ export async function cenaJogo(data = { lives: 3 }) {
     let currentLives = data.lives; 
     let isPaused = false; 
 
+    // INICIA A MÚSICA DE FUNDO DA FASE 1
+    const musicaFase = play("musica_fase1", {
+        volume: 0.5,   // Ajuste de 0.0 (mudo) a 1.0 (máximo)
+        loop: true     // Mantém a música repetindo em loop contínuo
+    });
 
     // Criação dos elementos de pausa individualmente com .fixed() e .anchor("center")
     // Usamos o centro absoluto da tela com center()
-    
     const fundoPause = add([
         rect(width(), height()),
         color(10, 10, 15),
@@ -53,7 +57,8 @@ export async function cenaJogo(data = { lives: 3 }) {
     ]);
     btnMenu.hidden = true
 
-    // Função para alternar o estado de pausa (Corrigida para múltiplos inimigos)
+    // Função para alternar o estado de pausa (Corrigida para pausar também a música de fundo)
+    // Função para alternar o estado de pausa (Atualizada para incluir o Boss e os Projéteis)
     function togglePause() {
         isPaused = !isPaused;
 
@@ -65,14 +70,24 @@ export async function cenaJogo(data = { lives: 3 }) {
 
         if (isPaused) {
             player.paused = true;
-            get("enemy").forEach(e => {
-                e.paused = true;
-            });
+            
+            // Pausa esqueletos, o chefe Lich e todos os projéteis ativos na tela
+            get("enemy").forEach(e => { e.paused = true; });
+            get("boss").forEach(b => { b.paused = true; });
+            get("projetilLich").forEach(p => { p.paused = true; });
+            
+            // Pausa a música de fundo mantendo o ponto atual
+            musicaFase.paused = true; 
         } else {
             player.paused = false;
-            get("enemy").forEach(e => {
-                e.paused = false;
-            });
+            
+            // Retoma o movimento de todas as entidades
+            get("enemy").forEach(e => { e.paused = false; });
+            get("boss").forEach(b => { b.paused = false; });
+            get("projetilLich").forEach(p => { p.paused = false; });
+            
+            // Retoma a música de fundo de onde parou
+            musicaFase.paused = false; 
         }
     }
 
@@ -240,6 +255,10 @@ export async function cenaJogo(data = { lives: 3 }) {
     let barraBossAtiva = false; // Controla se o chefe já recebeu o primeiro golpe
 
     function triggerDeath() {
+        // CORREÇÃO: Pausa o som atribuindo true à propriedade paused do objeto de áudio
+        if (musicaFase) {
+            musicaFase.paused = true;
+        }
         go("death", { lives: currentLives - 1 });
     }
 
@@ -422,13 +441,14 @@ export async function cenaJogo(data = { lives: 3 }) {
             bossHpBar.hidden = true;
             bossText.hidden = true;
 
-            // Mensagem de vitória do chefe
+            // Mensagem de vitória do chefe centralizada na tela do jogador
             add([
                 text("CHEFE DERROTADO!", { size: 28 }),
-                pos(center().x, center().y),
+                pos(center().x, center().y - 200),
                 anchor("center"),
                 color(100, 255, 100),
-                lifespan(20, { fade: 1 })
+                fixed(), // <--- ADICIONADO AQUI: Trava o texto na tela independente da câmera!
+                lifespan(4, { fade: 1 }) // (Opcional: Ajustei o tempo para 4 segundos para sumir depois de um tempo legal)
             ]);
         }
     }
