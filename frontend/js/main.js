@@ -38,11 +38,39 @@ loadSprite("player_ataque", "frontend/assets/sprites/Personagem-Principal-atacan
     anims: { "ataque": { from: 0, to: 4, speed: 15, loop: false } }
 });
 
+loadSprite("player_ataque_baixo", "frontend/assets/sprites/ataque-pulo-para-baixo.png", {
+    sliceX: 4, // A imagem tem exatamente 4 quadros lado a lado
+    sliceY: 1,
+    anims: { 
+        "ataque_baixo": { from: 0, to: 3, speed: 12, loop: false } 
+    }
+});
+
 loadSprite("esqueleto_ataque", "frontend/assets/sprites/Esqueleto-atacando.png", {
     sliceX: 5, // MUDE AQUI: Coloque o número exato de quadros do esqueleto atacando
     sliceY: 1,
     anims: { "ataque": { from: 0, to: 4, speed: 10, loop: false } }
 });
+
+loadSprite("esqueleto_caido", "frontend/assets/sprites/esqueleto-caido.png");
+
+// Carregamento do Lich e seu projétil
+loadSprite("lich", "frontend/assets/sprites/lich.png");
+loadSprite("projetil-lich", "frontend/assets/sprites/projetil-lich.png", {
+    sliceX: 3,
+    sliceY: 1,
+    anims: {
+        "voo": { from: 0, to: 2, speed: 12, loop: true }
+    }
+});
+loadSprite("explosao_lich", "frontend/assets/sprites/explosao-caveira.png", {
+    sliceX: 5, // A imagem tem 5 quadros de animação
+    sliceY: 1,
+    anims: {
+        "explodir": { from: 0, to: 4, speed: 12, loop: false }
+    }
+});
+
 
 // LISTA DE TODOS OS TILES DO CASTELO (Mapeados exatamente na ordem do Tiled Editor)
 const tilesets = [

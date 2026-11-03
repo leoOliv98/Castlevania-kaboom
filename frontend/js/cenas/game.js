@@ -1,5 +1,6 @@
 import { criarJogador } from "../entidades/jogador.js";
 import { criarEsqueleto } from "../entidades/inimigos.js";
+import { criarLich, criarExplosao } from "../entidades/lich.js";
 
 export async function cenaJogo(data = { lives: 3 }) {
     setGravity(2400);
@@ -134,6 +135,7 @@ export async function cenaJogo(data = { lives: 3 }) {
     
     // Vamos criar uma lista (array) para guardar as posições de todos os inimigos
     let inimigosSpawns = [];
+    let spawnLich = null; // Variável para guardar a posição do chefe
 
     if (objectLayer && objectLayer.objects) {
         // Pega o spawn do jogador
@@ -152,6 +154,12 @@ export async function cenaJogo(data = { lives: 3 }) {
             // Caso você esqueça de colocar no Tiled, coloca um padrão para não quebrar
             inimigosSpawns.push({ x: 500, y: 100 });
         }
+
+        // ADICIONE ESTE BLOCO PARA CAPTURAR O LICH-SPAWN DO SEU JSON:
+        const lichObj = objectLayer.objects.find(obj => obj.name === "lich-spawn");
+        if (lichObj) {
+        spawnLich = { x: lichObj.x, y: lichObj.y };
+        }
     }
 
     add([ sprite("background_fase1"), pos(-200, -300), z(-100), scale(3) ]);
@@ -163,11 +171,14 @@ export async function cenaJogo(data = { lives: 3 }) {
 
     // INSTANCIAÇÃO DAS ENTIDADES MODULARIZADAS
     const player = criarJogador(spawnPlayerX, spawnPlayerY);
-    //const deslocamentoX = 450; 
     // Cria um esqueleto para cada ponto "enemy_spawn" criado no Tiled Editor!
     inimigosSpawns.forEach(spawn => {
         criarEsqueleto(spawn.x, spawn.y, larguraTotalMapa);
     });
+    // ADICIONE ESTE BLOCO PARA CRIAR O LICH SE ELE TIVER SIDO ENCONTRADO NO MAPA:
+    if (spawnLich) {
+        criarLich(spawnLich.x, spawnLich.y);
+    }
 
     // HUD FIXO
     add([ rect(320, 90), pos(15, 15), color(0, 0, 0), opacity(0.6), fixed(), z(100) ]);
@@ -178,6 +189,55 @@ export async function cenaJogo(data = { lives: 3 }) {
     add([ rect(50, 50), pos(240, 25), color(40, 40, 50), outline(2, rgb(200, 200, 200)), fixed(), z(101) ]);
     add([ text("ITEM", { size: 10 }), pos(265, 30), anchor("center"), color(150, 150, 150), fixed(), z(102) ]);
     add([ text("Vazio", { size: 11 }), pos(265, 53), anchor("center"), color(100, 100, 100), fixed(), z(102) ]);
+
+    // --- HUD DA BARRA DE VIDA DO LICH (Inicialmente Oculta) ---
+    const larguraBarraBoss = 400;
+    
+    // Fundo da barra do chefe (centralizada no topo da tela)
+    const bossBarBg = add([ 
+        rect(larguraBarraBoss + 8, 24), 
+        pos(width() / 2, 35), 
+        anchor("center"),
+        color(0, 0, 0), 
+        opacity(0.7), 
+        fixed(), 
+        z(100) 
+    ]);
+    bossBarBg.hidden = true;
+
+    // Parte cinza de fundo da vida
+    const bossBarBack = add([ 
+        rect(larguraBarraBoss, 16), 
+        pos(width() / 2, 35), 
+        anchor("center"),
+        color(80, 20, 20), 
+        fixed(), 
+        z(101) 
+    ]);
+    bossBarBack.hidden = true;
+
+    // Parte vermelha dinâmica da vida do Lich
+    const bossHpBar = add([ 
+        rect(larguraBarraBoss, 16), 
+        pos(width() / 2 - larguraBarraBoss / 2, 35), // Alinhada à esquerda da barra
+        color(220, 40, 40), 
+        fixed(), 
+        z(102) 
+    ]);
+    bossHpBar.hidden = true;
+
+    // Nome do Chefe
+    const bossText = add([ 
+        text("LICH - O CHEFE", { size: 14 }), 
+        pos(width() / 2, 18), 
+        anchor("center"), 
+        color(255, 255, 255), 
+        fixed(), 
+        z(103) 
+    ]);
+    bossText.hidden = true;
+
+    let barraBossAtiva = false; // Controla se o chefe já recebeu o primeiro golpe
 
     function triggerDeath() {
         go("death", { lives: currentLives - 1 });
@@ -192,18 +252,186 @@ export async function cenaJogo(data = { lives: 3 }) {
         if (currentHp <= 0) triggerDeath();
     });
 
-    // NOVO: Quando o ataque do jogador encosta no esqueleto (Mata o esqueleto!)
+    // NOVO: Quando o ataque do jogador encosta no esqueleto (Transforma em pilha de ossos!)
     onCollide("ataqueJogador", "enemy", (ataque, enemy) => {
-        destroy(enemy); // O esqueleto é destruído
+        // Se ele já for uma pilha de ossos (morto), ignora o ataque!
+        if (enemy.isDead) return; 
+
+        enemy.isDead = true; 
         
-        // Opcionalzinho de charme: Cria um efeitinho na morte
+        // NÃO vamos mais remover a tag "enemy" (assim o togglePause consegue achar e pausar os ossos!)
+        
+        enemy.use(sprite("esqueleto_caido")); 
+
+        // AJUSTE DE FLUTUAÇÃO: Trocamos o offset Y de 20 para 10 (ou 5). 
+        // Isso sobe a caixa de colisão física, forçando a imagem do osso a descer e colar no chão!
+        enemy.use(area({ 
+            width: 45, 
+            height: 20, 
+            offset: vec2(0, 2), 
+            collisionIgnore: ["player", "enemy"] 
+        })); 
+        
         add([
-            text("MORTIS", { size: 12 }),
+            text("CRACK!", { size: 12 }),
             pos(enemy.pos.x, enemy.pos.y - 20),
-            color(200, 50, 50),
-            lifespan(0.5, { fade: 0.5 }) // Texto some flutuando
+            color(200, 200, 200),
+            lifespan(0.5, { fade: 0.5 })
         ]);
+
+        // TEMPORIZADOR INTELIGENTE: Usamos uma variável e o onUpdate em vez do wait() global
+        enemy.tempoRespawn = 10;
+        
+        const controleRespawn = enemy.onUpdate(() => {
+            // Como o esqueleto mantém a tag "enemy", o togglePause() altera o enemy.paused dele.
+            // Quando pausado, o Kaboom automaticamente congela o onUpdate, travando esse cronômetro!
+            enemy.tempoRespawn -= dt();
+            
+            if (enemy.tempoRespawn <= 0) {
+                if (enemy.exists()) {
+                    enemy.isDead = false; 
+                    enemy.isAttacking = false;
+                    
+                    enemy.use(sprite("esqueleto")); 
+                    enemy.play("walk");
+                    
+                    enemy.use(area({ 
+                        width: 30, 
+                        height: 50, 
+                        offset: vec2(0, 5),
+                        collisionIgnore: [] 
+                    })); 
+                    
+                    add([
+                        text("REVIVEU!", { size: 10 }),
+                        pos(enemy.pos.x, enemy.pos.y - 30),
+                        color(200, 50, 50),
+                        lifespan(0.5, { fade: 0.5 })
+                    ]);
+                }
+                // Encerra esse cronômetro para ele não continuar rodando em loop
+                controleRespawn.cancel();
+            }
+        });
     });
+
+    // Quando o ataque para baixo do jogador encosta no esqueleto
+    onCollide("ataqueBaixoJogador", "enemy", (ataque, enemy) => {
+        if (enemy.isDead) return; 
+
+        enemy.isDead = true; 
+        enemy.use(sprite("esqueleto_caido")); 
+        enemy.use(area({ 
+            width: 45, 
+            height: 20, 
+            offset: vec2(0, 10), 
+            collisionIgnore: ["player", "enemy"] 
+        })); 
+        
+        add([
+            text("CRACK!", { size: 12 }),
+            pos(enemy.pos.x, enemy.pos.y - 20),
+            color(200, 200, 200),
+            lifespan(0.5, { fade: 0.5 })
+        ]);
+
+        // Temporizador de respawn (mesma lógica dos 10 segundos)
+        enemy.tempoRespawn = 10;
+        const controleRespawn = enemy.onUpdate(() => {
+            enemy.tempoRespawn -= dt();
+            if (enemy.tempoRespawn <= 0) {
+                if (enemy.exists()) {
+                    enemy.isDead = false; 
+                    enemy.isAttacking = false;
+                    enemy.use(sprite("esqueleto")); 
+                    enemy.play("walk");
+                    enemy.use(area({ 
+                        width: 30, 
+                        height: 50, 
+                        offset: vec2(0, 5),
+                        collisionIgnore: [] 
+                    })); 
+                    
+                    add([
+                        text("REVIVEU!", { size: 10 }),
+                        pos(enemy.pos.x, enemy.pos.y - 30),
+                        color(200, 50, 50),
+                        lifespan(0.5, { fade: 0.5 })
+                    ]);
+                }
+                controleRespawn.cancel();
+            }
+        });
+    });
+
+    player.onCollide("projetilLich", (proj) => {
+        // Cria a explosão na posição atual do projétil antes de destruí-lo
+        criarExplosao(proj.pos);
+
+        destroy(proj);
+        currentHp = Math.max(0, currentHp - 30);
+        hpBar.width = (currentHp / maxHp) * 160;
+        if (currentHp <= 0) triggerDeath();
+    });
+
+    // Dano do Ataque Lateral do Jogador no Lich
+    onCollide("ataqueJogador", "boss", (ataque, boss) => {
+        processarDanoBoss(boss);
+    });
+
+    // Dano do Ataque Para Baixo do Jogador no Lich
+    onCollide("ataqueBaixoJogador", "boss", (ataque, boss) => {
+        processarDanoBoss(boss);
+    });
+
+    // Função central para aplicar o dano de 5 HP por golpe
+    function processarDanoBoss(boss) {
+        if (boss.isDead) return;
+
+        // Se for o primeiro golpe, revela a barra de vida no topo da tela!
+        if (!barraBossAtiva) {
+            barraBossAtiva = true;
+            bossBarBg.hidden = false;
+            bossBarBack.hidden = false;
+            bossHpBar.hidden = false;
+            bossText.hidden = false;
+        }
+
+        boss.hp = Math.max(0, boss.hp - 5); // Tira 5 de vida por golpe
+        
+        // Atualiza a largura visual da barra vermelha proporcionalmente
+        bossHpBar.width = (boss.hp / boss.maxHp) * larguraBarraBoss;
+
+        // Efeitinho de texto de dano
+        add([
+            text("-5", { size: 14 }),
+            pos(boss.pos.x, boss.pos.y - 40),
+            color(255, 255, 0),
+            lifespan(0.4, { fade: 0.4 })
+        ]);
+
+        // Se a vida chegar a zero (6º golpe), o Lich morre!
+        if (boss.hp <= 0) {
+            boss.isDead = true;
+            criarExplosao(boss.pos);
+            destroy(boss);
+
+            // Esconde a barra de vida após derrotá-lo
+            bossBarBg.hidden = true;
+            bossBarBack.hidden = true;
+            bossHpBar.hidden = true;
+            bossText.hidden = true;
+
+            // Mensagem de vitória do chefe
+            add([
+                text("CHEFE DERROTADO!", { size: 28 }),
+                pos(center().x, center().y),
+                anchor("center"),
+                color(100, 255, 100),
+                lifespan(20, { fade: 1 })
+            ]);
+        }
+    }
 
     // ATUALIZAÇÃO DA CÂMERA (Travada nos eixos X e Y)
     player.onUpdate(() => {

@@ -7,12 +7,20 @@ export function criarEsqueleto(spawnX, spawnY, larguraTotalMapa) {
         scale(0.4),
         anchor("center"),
         "enemy",
-        { dir: 1, speed: 70, isAttacking: false }
+        { 
+            dir: 1, 
+            speed: 70, 
+            isAttacking: false,
+            isDead: false // NOVO: Flag para controlar se está vivo ou em pilha de ossos
+        }
     ]);
 
     let ultimoPulo = 0;
 
     enemy.onUpdate(() => {
+        // NOVO: Se estiver morto, cancela toda a inteligência (não anda, não ataca, não vira)
+        if (enemy.isDead) return;
+
         if (enemy.isAttacking) return;
 
         const player = get("player")[0];
@@ -21,11 +29,9 @@ export function criarEsqueleto(spawnX, spawnY, larguraTotalMapa) {
             const distX = player.pos.x - enemy.pos.x;
             const distY = Math.abs(player.pos.y - enemy.pos.y);
 
-            // Quando o jogador chega perto, o esqueleto ataca com aviso visual imediato
             if (Math.abs(distX) < 60 && distY < 50) {
                 enemy.isAttacking = true;
                 
-                // Vira para o jogador
                 enemy.dir = distX > 0 ? 1 : -1;
                 enemy.flipX = enemy.dir < 0;
 
@@ -36,7 +42,8 @@ export function criarEsqueleto(spawnX, spawnY, larguraTotalMapa) {
                 enemy.flipX = (direcaoAtk < 0);
 
                 wait(0.25, () => {
-                    if (!enemy.exists()) return;
+                    // Impede o ataque se o esqueleto foi destruído ou MORTO durante o aviso
+                    if (!enemy.exists() || enemy.isDead) return;
 
                     const offsetHitbox = direcaoAtk * 40;
 
@@ -55,13 +62,12 @@ export function criarEsqueleto(spawnX, spawnY, larguraTotalMapa) {
             }
         }
 
-        // Lógica de Patrulha normal
-        enemy.move(enemy.speed * enemy.dir, 0);
+        const velocidadeAtual = enemy.isGrounded() ? enemy.speed : enemy.speed * 2.5;
+        enemy.move(velocidadeAtual * enemy.dir, 0);
 
-        // Detecção de buracos com Cooldown
-        if (enemy.isGrounded() && (time() - ultimoPulo > 3)) {
-            const aheadX = enemy.pos.x + (enemy.dir * 25);
-            const aheadY = enemy.pos.y + 20; 
+        if (enemy.isGrounded() && (time() - ultimoPulo > 2.5)) {
+            const aheadX = enemy.pos.x + (enemy.dir * 50);
+            const aheadY = enemy.pos.y + 10; 
 
             const chaoAdiante = get("ground").some(g => g.hasPoint(vec2(aheadX, aheadY)));
 
@@ -80,9 +86,11 @@ export function criarEsqueleto(spawnX, spawnY, larguraTotalMapa) {
         }
     });
 
-    // Inverte o movimento e dá um pulo ao colidir com uma parede lateral
-    enemy.onCollide("ground", (ground, col) => {
-        if (col.isLeft() || col.isRight()) {
+    enemy.onCollideUpdate("ground", (ground, col) => {
+        // NOVO: Se estiver morto, ele não inverte a direção nem pula ao bater na parede
+        if (enemy.isDead) return; 
+
+        if ((col.isLeft() && enemy.dir === -1) || (col.isRight() && enemy.dir === 1)) {
             enemy.dir *= -1;
             enemy.flipX = (enemy.dir < 0);
             
@@ -93,22 +101,21 @@ export function criarEsqueleto(spawnX, spawnY, larguraTotalMapa) {
         }
     });
 
-    // Inverte o movimento e pula também se esbarrar em outro esqueleto/inimigo
     enemy.onCollide("enemy", (outroInimigo, col) => {
-        if (col.isLeft() || col.isRight()) {
+        if (enemy.isDead) return; // Mortos não desviam
+
+        if ((col.isLeft() && enemy.dir === -1) || (col.isRight() && enemy.dir === 1)) {
             enemy.dir *= -1;
             enemy.flipX = (enemy.dir < 0);
         }
     });
 
-    // NOVO: Se o esqueleto encostar na zona de morte lá embaixo, ele é destruído
     enemy.onCollide("deathZone", () => {
-        destroy(enemy);
+        destroy(enemy); // A zona de morte ainda destrói permanentemente
     });
 
-    // FIM DA ANIMAÇÃO: Esqueleto volta a patrulhar
     enemy.onAnimEnd((anim) => {
-        if (anim === "ataque") {
+        if (anim === "ataque" && !enemy.isDead) { // Só volta a andar se não morreu
             enemy.isAttacking = false;
             enemy.use(sprite("esqueleto"));
             enemy.play("walk");

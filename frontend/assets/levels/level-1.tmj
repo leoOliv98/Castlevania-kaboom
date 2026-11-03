@@ -164,6 +164,18 @@
                  "width":0,
                  "x":2376,
                  "y":250
+                }, 
+                {
+                 "height":0,
+                 "id":11,
+                 "name":"lich-spawn",
+                 "opacity":1,
+                 "rotation":0,
+                 "type":"",
+                 "visible":true,
+                 "width":0,
+                 "x":2363.33333333333,
+                 "y":59.3333333333333
                 }],
          "opacity":1,
          "type":"objectgroup",
@@ -172,7 +184,7 @@
          "y":0
         }],
  "nextlayerid":5,
- "nextobjectid":11,
+ "nextobjectid":12,
  "orientation":"orthogonal",
  "renderorder":"right-down",
  "tiledversion":"1.12.2",
