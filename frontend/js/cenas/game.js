@@ -273,23 +273,22 @@ export async function cenaJogo(data = { lives: 3 }) {
 
     // NOVO: Quando o ataque do jogador encosta no esqueleto (Transforma em pilha de ossos!)
     onCollide("ataqueJogador", "enemy", (ataque, enemy) => {
-        // Se ele já for uma pilha de ossos (morto), ignora o ataque!
         if (enemy.isDead) return; 
 
+        play("som_quebrar", { volume: 0.7 });
         enemy.isDead = true; 
         
-        // NÃO vamos mais remover a tag "enemy" (assim o togglePause consegue achar e pausar os ossos!)
-        
         enemy.use(sprite("esqueleto_caido")); 
+        
+        // ADICIONE OU AJUSTE A ESCALA DA PILHA DE OSSOS AQUI:
+        enemy.use(scale(0.08)); // Mude este valor para deixar maior ou menor (ex: 0.35, 0.45)
 
-        // AJUSTE DE FLUTUAÇÃO: Trocamos o offset Y de 20 para 10 (ou 5). 
-        // Isso sobe a caixa de colisão física, forçando a imagem do osso a descer e colar no chão!
         enemy.use(area({ 
             width: 45, 
             height: 20, 
             offset: vec2(0, 2), 
             collisionIgnore: ["player", "enemy"] 
-        })); 
+        }));
         
         add([
             text("CRACK!", { size: 12 }),
@@ -314,6 +313,9 @@ export async function cenaJogo(data = { lives: 3 }) {
                     enemy.use(sprite("esqueleto")); 
                     enemy.play("walk");
                     
+                    // ADICIONE ESTA LINHA PARA RESTAURAR O TAMANHO NORMAL AO REVIVER:
+                    enemy.use(scale(0.4));
+
                     enemy.use(area({ 
                         width: 30, 
                         height: 50, 
@@ -336,16 +338,22 @@ export async function cenaJogo(data = { lives: 3 }) {
 
     // Quando o ataque para baixo do jogador encosta no esqueleto
     onCollide("ataqueBaixoJogador", "enemy", (ataque, enemy) => {
-        if (enemy.isDead) return; 
+        if (enemy.isDead) return;
 
+        play("som_quebrar", { volume: 0.7 });
         enemy.isDead = true; 
+
         enemy.use(sprite("esqueleto_caido")); 
+
+        // ADICIONE OU AJUSTE A ESCALA DA PILHA DE OSSOS AQUI TAMBÉM:
+        enemy.use(scale(0.08)); // Mude para o mesmo valor do ataque lateral
+
         enemy.use(area({ 
             width: 45, 
             height: 20, 
             offset: vec2(0, 10), 
             collisionIgnore: ["player", "enemy"] 
-        })); 
+        }));
         
         add([
             text("CRACK!", { size: 12 }),
@@ -364,6 +372,10 @@ export async function cenaJogo(data = { lives: 3 }) {
                     enemy.isAttacking = false;
                     enemy.use(sprite("esqueleto")); 
                     enemy.play("walk");
+
+                    // ADICIONE ESTA LINHA PARA RESTAURAR O TAMANHO NORMAL AO REVIVER:
+                    enemy.use(scale(0.4));
+
                     enemy.use(area({ 
                         width: 30, 
                         height: 50, 
@@ -389,6 +401,13 @@ export async function cenaJogo(data = { lives: 3 }) {
 
         destroy(proj);
         currentHp = Math.max(0, currentHp - 30);
+        hpBar.width = (currentHp / maxHp) * 160;
+        if (currentHp <= 0) triggerDeath();
+    });
+
+    player.onCollide("raioLich", () => {
+        // Tira 80 de dano (80% da vida total que é 100)
+        currentHp = Math.max(0, currentHp - 80); 
         hpBar.width = (currentHp / maxHp) * 160;
         if (currentHp <= 0) triggerDeath();
     });

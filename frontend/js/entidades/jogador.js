@@ -48,10 +48,10 @@ export function criarJogador(spawnX, spawnY) {
     // SISTEMA DE ATAQUE (Tecla Z ou Z + Baixo)
     onKeyPress("z", () => {
         if (player.isAttacking) return;
+        
+            play("som_ataque", { volume: 0.6 });   
 
-        // NOVO: Apenas verifica se a seta para baixo está pressionada, sem exigir que esteja no ar
         const querAtacarParaBaixo = isKeyDown("down");
-
         const estaViradoEsquerda = player.flipX;
         player.isAttacking = true;
 
@@ -63,7 +63,7 @@ export function criarJogador(spawnX, spawnY) {
             player.scale = vec2(0.4);
             player.flipX = estaViradoEsquerda;
 
-            // Cria a Hitbox logo abaixo dos pés do personagem
+            // Cria a Hitbox do ataque para baixo
             add([
                 rect(40, 40),
                 pos(player.pos.x, player.pos.y + 45),
@@ -74,7 +74,6 @@ export function criarJogador(spawnX, spawnY) {
                 "ataqueBaixoJogador" 
             ]);
 
-            // Dá um leve impulso para cima simulando o recuo do impacto no chão/inimigo
             player.jump(500);
 
         } else {
@@ -87,6 +86,7 @@ export function criarJogador(spawnX, spawnY) {
 
             const direcaoX = estaViradoEsquerda ? -40 : 40;
             
+            // Cria a Hitbox do ataque lateral
             add([
                 rect(40, 50),
                 pos(player.pos.x + direcaoX, player.pos.y),

@@ -57,6 +57,13 @@ loadSprite("esqueleto_caido", "frontend/assets/sprites/esqueleto-caido.png");
 
 // Carregamento do Lich e seu projétil
 loadSprite("lich", "frontend/assets/sprites/lich.png");
+loadSprite("lich_ataque", "frontend/assets/sprites/lich-atacando-projetil.png", {
+    sliceX: 4, // A imagem possui exatamente 4 quadros
+    sliceY: 1,
+    anims: {
+        "ataque": { from: 0, to: 3, speed: 8, loop: false }
+    }
+});
 loadSprite("projetil-lich", "frontend/assets/sprites/projetil-lich.png", {
     sliceX: 3,
     sliceY: 1,
@@ -97,6 +104,8 @@ tilesets.forEach((nomeImagem, index) => {
 
 // CARREGAMENTO DOS ÁUDIOS
 loadSound("musica_fase1", "frontend/assets/sounds/level-1.mp3");
+loadSound("som_ataque", "frontend/assets/sounds/player-ataque-espada.mp3");
+loadSound("som_quebrar", "frontend/assets/sounds/esqueleto-quebrando.mp3");
 
 // REGISTRO DAS CENAS
 scene("menu", cenaMenu);
