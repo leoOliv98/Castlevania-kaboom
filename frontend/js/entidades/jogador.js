@@ -1,4 +1,6 @@
 export function criarJogador(spawnX, spawnY) {
+    let ultimaDirecao = false;
+
     const player = add([
         sprite("player", { anim: "idle" }),
         pos(spawnX, spawnY),
@@ -23,7 +25,7 @@ export function criarJogador(spawnX, spawnY) {
     });
 
     onKeyDown("right", () => {
-        if (player.isAttacking || player.paused) return;
+        if (player.isAttacking || player.paused) return; 
         player.move(SPEED, 0);
         player.flipX = false;
         ultimaDirecao = false;
@@ -45,25 +47,20 @@ export function criarJogador(spawnX, spawnY) {
         }
     });
 
-    // SISTEMA DE ATAQUE (Tecla Z ou Z + Baixo)
+    // SISTEMA DE ATAQUE FÍSICO (Tecla Z ou Z + Baixo)
     onKeyPress("z", () => {
         if (player.isAttacking) return;
 
-        // NOVO: Apenas verifica se a seta para baixo está pressionada, sem exigir que esteja no ar
         const querAtacarParaBaixo = isKeyDown("down");
-
         const estaViradoEsquerda = player.flipX;
         player.isAttacking = true;
 
         if (querAtacarParaBaixo) {
-            // ATAQUE PARA BAIXO (No ar ou no chão)
             player.use(sprite("player_ataque_baixo")); 
             player.play("ataque_baixo");
-
             player.scale = vec2(0.4);
             player.flipX = estaViradoEsquerda;
 
-            // Cria a Hitbox logo abaixo dos pés do personagem
             add([
                 rect(40, 40),
                 pos(player.pos.x, player.pos.y + 45),
@@ -74,14 +71,10 @@ export function criarJogador(spawnX, spawnY) {
                 "ataqueBaixoJogador" 
             ]);
 
-            // Dá um leve impulso para cima simulando o recuo do impacto no chão/inimigo
             player.jump(500);
-
         } else {
-            // ATAQUE NORMAL (Lateral)
             player.use(sprite("player_ataque")); 
             player.play("ataque");
-
             player.scale = vec2(0.4); 
             player.flipX = estaViradoEsquerda;
 
@@ -97,19 +90,50 @@ export function criarJogador(spawnX, spawnY) {
                 "ataqueJogador" 
             ]);
         }
+    });  
+
+    // SISTEMA DE MAGIA DE FOGO (Tecla X)
+    onKeyPress("x", () => {
+        if (player.isAttacking) return;
+
+        const estaViradoEsquerda = player.flipX;
+        player.isAttacking = true;
+
+        // Usa o sprite do ataque de fogo e inicia a animação
+        player.use(sprite("ataque_fogo"));
+        player.play("cast");
+
+        player.scale = vec2(0.4);
+        player.flipX = estaViradoEsquerda;
+
+        const offsetSpawnX = estaViradoEsquerda ? -30 : 30;
+        const direcaoProjetil = estaViradoEsquerda ? -1 : 1;
+        const velocidadeProjetil = 400;
+
+        const bolaDeFogo = add([
+            sprite("bola_fogo", { anim: "fly" }),
+            pos(player.pos.x + offsetSpawnX, player.pos.y),
+            anchor("center"),
+            area(),
+            scale(0.5),
+            move(vec2(direcaoProjetil, 0), velocidadeProjetil),
+            lifespan(1.2),
+            "ataqueFogoJogador",
+        ]);
+
+        bolaDeFogo.flipX = estaViradoEsquerda;
     });
 
-    // FIM DA ANIMAÇÃO: Limpamos o bloco duplicado! Trata as duas animações perfeitamente.
+    // FIM DE QUALQUER ANIMAÇÃO DE ATAQUE (Z ou X)
     player.onAnimEnd((anim) => {
-        if (anim === "ataque" || anim === "ataque_baixo") {
+        if (anim === "ataque" || anim === "ataque_baixo" || anim === "cast") {
             player.isAttacking = false;
-            player.use(sprite("player")); 
+            player.use(sprite("player")); // Retorna ao sprite base correto
             player.play("idle");
             player.scale = vec2(0.35); 
             player.flipX = ultimaDirecao; 
         }
     });
 
-    let ultimaDirecao = false;
     return player;
 }

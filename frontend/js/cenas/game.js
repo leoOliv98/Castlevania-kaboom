@@ -143,7 +143,7 @@ export async function cenaJogo(data = { lives: 3 }) {
                 add(componentes);
             }
         });
-    });
+    }); 
 
     const objectLayer = mapJson.layers.find(layer => layer.type === "objectgroup");
     let spawnPlayerX = 150, spawnPlayerY = 100;
