@@ -1,33 +1,96 @@
 export function criarJogador(spawnX, spawnY) {
     const player = add([
-        sprite("player", { anim: "idle" }),
+        sprite("player"),
         pos(spawnX, spawnY),
-        area({ width: 30, height: 50, offset: vec2(0, 5) }),
-        body({ maxVel: 800 }),
-        scale(0.35),
         anchor("center"),
+        scale(0.35), // <--- DEFINIDO AQUI: Garante que ele já nasce no tamanho correto!
+        area(),
+        body(),
         "player",
-        { isAttacking: false } 
+        {
+            isInvulnerable: false,
+            isKnockbacked: false,
+            isFlying: false,
+            tempoVoo: 0,
+            
+            ativarVoo(segundos) {
+                this.isFlying = true;
+                this.tempoVoo = segundos;
+                this.use(body({ gravityScale: 0 }));
+                
+                add([
+                    text("Voo Ativado! (10s)", { size: 14 }),
+                    pos(this.pos.x, this.pos.y - 30),
+                    color(150, 200, 255),
+                    lifespan(1, { fade: 1 })
+                ]);
+            }
+        }
     ]);
 
-    const SPEED = 300;
-    const JUMP_FORCE = 1100;
+    player.onUpdate(() => {
+        // Se estiver voando, diminui o tempo usando o delta time (dt)
+        if (player.isFlying) {
+            player.tempoVoo -= dt(); 
+            
+            if (player.tempoVoo <= 0) {
+                player.isFlying = false;
+                player.use(body({ gravityScale: 1 })); // Religa a gravidade
+                
+                add([
+                    text("Voo Esgotado!", { size: 14 }),
+                    pos(player.pos.x, player.pos.y - 30),
+                    color(200, 200, 200),
+                    lifespan(1, { fade: 1 })
+                ]);
+            }
+        }
+    });
 
-    // CONTROLES DE MOVIMENTO ATUALIZADOS COM O KNOCKBACK
+    const JUMP_FORCE = 1100;
+    const VELOCIDADE_BASE = 200;
+    const VELOCIDADE_VOO = 350; // Um pouco mais rápido no ar
+
     onKeyDown("left", () => {
-        if (player.isAttacking || player.paused || player.isKnockbacked) return; // <- Adicionado "player.isKnockbacked" aqui
-        player.move(-SPEED, 0);
+        if (player.paused || player.isKnockbacked) return;
+        const vel = player.isFlying ? VELOCIDADE_VOO : VELOCIDADE_BASE;
+        player.move(-vel, 0);
         player.flipX = true;
-        ultimaDirecao = true;
-        if (player.isGrounded() && player.curAnim() !== "walk") player.play("walk");
+        
+        // CORREÇÃO: Dispara a animação de andar se estiver no chão
+        if (player.isGrounded() && player.curAnim() !== "walk" && !player.isAttacking) {
+            player.play("walk");
+        }
     });
 
     onKeyDown("right", () => {
-        if (player.isAttacking || player.paused || player.isKnockbacked) return; // <- Adicionado "player.isKnockbacked" aqui
-        player.move(SPEED, 0);
+        if (player.paused || player.isKnockbacked) return;
+        const vel = player.isFlying ? VELOCIDADE_VOO : VELOCIDADE_BASE;
+        player.move(vel, 0);
         player.flipX = false;
-        ultimaDirecao = false;
-        if (player.isGrounded() && player.curAnim() !== "walk") player.play("walk");
+        
+        // CORREÇÃO: Dispara a animação de andar se estiver no chão
+        if (player.isGrounded() && player.curAnim() !== "walk" && !player.isAttacking) {
+            player.play("walk");
+        }
+    });
+
+    onKeyDown("up", () => {
+        if (player.paused || player.isKnockbacked) return;
+        
+        if (player.isFlying) {
+            // Movimento livre para cima
+            player.move(0, -VELOCIDADE_VOO);
+        } 
+    });
+
+    onKeyDown("down", () => {
+        if (player.paused || player.isKnockbacked) return;
+        
+        if (player.isFlying) {
+            // Movimento livre para baixo
+            player.move(0, VELOCIDADE_VOO);
+        }
     });
 
     onKeyRelease("left", () => {
@@ -46,10 +109,11 @@ export function criarJogador(spawnX, spawnY) {
     });
 
     // SISTEMA DE ATAQUE (Tecla Z ou Z + Baixo)
+    // SISTEMA DE ATAQUE (Tecla Z ou Z + Baixo)
     onKeyPress("z", () => {
         if (player.isAttacking) return;
         
-            play("som_ataque", { volume: 0.6 });   
+        play("som_ataque", { volume: 0.6 });   
 
         const querAtacarParaBaixo = isKeyDown("down");
         const estaViradoEsquerda = player.flipX;
@@ -60,17 +124,17 @@ export function criarJogador(spawnX, spawnY) {
             player.use(sprite("player_ataque_baixo")); 
             player.play("ataque_baixo");
 
-            player.scale = vec2(0.4);
+            player.scale = vec2(0.4); 
             player.flipX = estaViradoEsquerda;
 
-            // Cria a Hitbox do ataque para baixo
+            // HITBOX EXPANDIDA PARA O ATAQUE PARA BAIXO
             add([
-                rect(40, 40),
-                pos(player.pos.x, player.pos.y + 45),
+                rect(80, 60),
+                pos(player.pos.x, player.pos.y + 20), // <--- aumentado o Y para a hitbox do ataque ficar mais abaixo do jogador
                 anchor("center"),
                 area(),
-                opacity(0), 
-                lifespan(0.25), 
+                opacity(0),
+                lifespan(0.2),
                 "ataqueBaixoJogador" 
             ]);
 
@@ -84,15 +148,16 @@ export function criarJogador(spawnX, spawnY) {
             player.scale = vec2(0.4); 
             player.flipX = estaViradoEsquerda;
 
-            const direcaoX = estaViradoEsquerda ? -40 : 40;
+            const larguraAtaque = 70;
+            const direcaoX = estaViradoEsquerda ? -(larguraAtaque / 2 + 10) : (larguraAtaque / 2 + 10);
             
-            // Cria a Hitbox do ataque lateral
+            // Hitbox simétrica com ajuste de altura para o tronco
             add([
-                rect(40, 50),
+                rect(larguraAtaque, 40), 
                 pos(player.pos.x + direcaoX, player.pos.y),
                 anchor("center"),
                 area(),
-                opacity(0), 
+                opacity(0),     // Visível para ajuste fino
                 lifespan(0.2), 
                 "ataqueJogador" 
             ]);

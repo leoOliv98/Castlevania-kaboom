@@ -93,6 +93,10 @@ loadSprite("explosao_azul", "frontend/assets/sprites/explosao-azul.png", {
     }
 });
 
+// Carregamento dos Itens
+loadSprite("pocao-vida", "frontend/assets/sprites/pocao-vida.png");
+loadSprite("asas", "frontend/assets/sprites/asas.png");
+
 // LISTA DE TODOS OS TILES DO CASTELO (Mapeados exatamente na ordem do Tiled Editor)
 const tilesets = [
     "arco-direita", "arco-esquerda", "candelabro", "chao-castelo-centro",

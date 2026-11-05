@@ -5,6 +5,10 @@ import { criarLich, criarExplosaoVerde, criarExplosaoAzul } from "../entidades/l
 export async function cenaJogo(data = { lives: 3 }) {
     setGravity(2400);
 
+    // --- REINICIA O INVENTÁRIO AO ENTRAR NA FASE/RESSUSCITAR ---
+    sistemaInventario.itens = [];
+    sistemaInventario.indiceSelecionado = 0;
+
     let currentHp = 100;
     const maxHp = 100;
     let currentLives = data.lives; 
@@ -110,6 +114,53 @@ export async function cenaJogo(data = { lives: 3 }) {
         }
     });
 
+    // Tecla 'A' para circular entre os itens
+    onKeyPress("a", () => {
+        if (isPaused) return;
+        sistemaInventario.avancarSelecao();
+        atualizarHUDInventario();
+    });
+
+    // Tecla 'S' para usar o item
+    onKeyPress("s", () => {
+        if (isPaused) return;
+
+        const item = sistemaInventario.obterItemAtual();
+        if (!item) return;
+
+        if (item.tipo === "cura") {
+            if (currentHp < maxHp) {
+                currentHp = Math.min(maxHp, currentHp + 40); 
+                hpBar.width = (currentHp / maxHp) * 160; 
+
+                add([
+                    text("+40", { size: 16 }),
+                    pos(player.pos.x, player.pos.y - 40),
+                    color(50, 255, 50),
+                    lifespan(1, { fade: 1 })
+                ]);
+                
+                sistemaInventario.removerItemAtual();
+                atualizarHUDInventario();
+            }
+        } else if (item.tipo === "voo") {
+            // Chama a função de voo passando o tempo (10 segundos)
+            player.ativarVoo(10);
+            
+            // Consome o item e atualiza o HUD
+            sistemaInventario.removerItemAtual();
+            atualizarHUDInventario();
+        } else {
+            player.use(body({ gravityScale: 1 })); // Restaura a gravidade
+            add([
+                text("Voo Desativado", { size: 14 }),
+                pos(player.pos.x, player.pos.y - 30),
+                color(200, 200, 200),
+                lifespan(1, { fade: 1 })
+            ]);
+        }
+    });
+
     const response = await fetch("frontend/assets/levels/level-1.tmj");
     const mapJson = await response.json();
 
@@ -193,6 +244,13 @@ export async function cenaJogo(data = { lives: 3 }) {
 
     // INSTANCIAÇÃO DAS ENTIDADES MODULARIZADAS
     const player = criarJogador(spawnPlayerX, spawnPlayerY);
+    // --- PROTEÇÃO DE SPAWN CONTRA A ZONA DE MORTE ---
+    // Isso evita que, se o mapa demorar 1 milissegundo extra para desenhar o chão, 
+    // o jogador morra instantaneamente.
+    let isSpawning = true;
+    wait(1.5, () => { // 1.5 segundos de imunidade inicial ao abismo
+        isSpawning = false;
+    });
     // Cria um esqueleto para cada ponto "enemy_spawn" criado no Tiled Editor!
     inimigosSpawns.forEach(spawn => {
         criarEsqueleto(spawn.x, spawn.y, larguraTotalMapa);
@@ -202,6 +260,27 @@ export async function cenaJogo(data = { lives: 3 }) {
         criarLich(spawnLich.x, spawnLich.y);
     }
 
+    // === GERAÇÃO DOS ITENS NO MAPA ===
+    // Poção de Vida
+    add([
+        sprite("pocao-vida"), 
+        pos(spawnPlayerX + 80, spawnPlayerY),
+        scale(0.2), // <--- AJUSTE A ESCALA AQUI (ex: 0.3 ou 0.35)
+        area(), 
+        "item_coletavel",
+        { nome: "Poção", tipo: "cura", spriteId: "pocao-vida" } // Adicionamos a referência do id do sprite aqui
+    ]);
+
+    // Asas
+    add([
+        sprite("asas"), 
+        pos(spawnPlayerX + 160, spawnPlayerY), 
+        scale(0.2), // <--- AJUSTE A ESCALA AQUI
+        area(),
+        "item_coletavel",
+        { nome: "Asas", tipo: "voo", spriteId: "asas" } // Adicionamos a referência do id do sprite aqui
+    ]);
+
     // HUD FIXO
     add([ rect(320, 90), pos(15, 15), color(0, 0, 0), opacity(0.6), fixed(), z(100) ]);
     add([ rect(164, 20), pos(25, 25), color(80, 80, 80), fixed(), z(101) ]);
@@ -210,7 +289,30 @@ export async function cenaJogo(data = { lives: 3 }) {
 
     add([ rect(50, 50), pos(240, 25), color(40, 40, 50), outline(2, rgb(200, 200, 200)), fixed(), z(101) ]);
     add([ text("ITEM", { size: 10 }), pos(265, 30), anchor("center"), color(150, 150, 150), fixed(), z(102) ]);
-    add([ text("Vazio", { size: 11 }), pos(265, 53), anchor("center"), color(100, 100, 100), fixed(), z(102) ]);
+
+    // CRIAMOS UM SPRITE PLACEHOLDER INICIALMENTE INVISÍVEL OU VAZIO NA HUD
+    let hudItemSprite = add([
+        sprite("pocao-vida"), // sprite padrão temporário
+        pos(265, 53),
+        anchor("center"),
+        scale(0.2), // Escala menor para caber perfeitamente na caixinha da HUD
+        fixed(),
+        z(102)
+    ]);
+    hudItemSprite.hidden = true;
+
+    atualizarHUDInventario();
+
+    // Função que lê o objeto global e atualiza a tela com o sprite do item
+    function atualizarHUDInventario() {
+        const itemAtual = sistemaInventario.obterItemAtual();
+        if (itemAtual) {
+            hudItemSprite.use(sprite(itemAtual.spriteId)); // Altera para o sprite correto (ex: "pocao-vida" ou "asas")
+            hudItemSprite.hidden = false;                  // Mostra o ícone
+        } else {
+            hudItemSprite.hidden = true;                   // Esconde se estiver vazio
+        }
+    }
 
     // --- HUD DA BARRA DE VIDA DO LICH (Inicialmente Oculta) ---
     const larguraBarraBoss = 400;
@@ -324,7 +426,23 @@ export async function cenaJogo(data = { lives: 3 }) {
         });
     }
 
-    player.onCollide("deathZone", () => triggerDeath());
+    player.onCollide("deathZone", () => {
+        if (!isSpawning) { // Só morre se a proteção inicial tiver acabado
+            triggerDeath();
+        } else {
+            // Se cair no buraco durante o spawn, teletransporta de volta para o ponto seguro
+            player.pos.x = spawnPlayerX;
+            player.pos.y = spawnPlayerY;
+        }
+    });
+
+    player.onCollide("item_coletavel", (item) => {
+        const pegou = sistemaInventario.adicionarItem(item.nome, item.tipo, item.spriteId);
+        if (pegou) {
+            destroy(item);
+            atualizarHUDInventario(); 
+        }
+    }); 
 
     player.onCollide("ataqueInimigo", (enemy) => {
       causarDanoJogador(40, enemy.pos.x);
