@@ -1,15 +1,16 @@
 export function criarLich(spawnX, spawnY) {
     const lich = add([
-        sprite("lich"),
+        sprite("lich", { anim: "walk" }),
         pos(spawnX, spawnY),
         area({ width: 40, height: 70, offset: vec2(0, 5) }),
         body({ gravityScale: 0 }),
-        scale(0.45),
+        scale(0.4),
         anchor("center"),
         "boss",
         { 
             speed: 50, 
             tempoAtaque: 0,
+            tempoRisada: 0, // NOVO: Controla o intervalo para as risadas
             hp: 30,
             maxHp: 30,
             isDead: false,
@@ -19,6 +20,24 @@ export function criarLich(spawnX, spawnY) {
 
     lich.onUpdate(() => {
         if (lich.isDead) return;
+
+        // --- SISTEMA DE RISADAS ALEATÓRIAS A CADA ALGUNS SEGUNDOS ---
+        if (!lich.paused) {
+            lich.tempoRisada += dt();
+            // Sorteia um intervalo entre 6 e 12 segundos para a risada
+            if (!lich.intervaloRisadaAlvo) {
+                lich.intervaloRisadaAlvo = rand(6, 12);
+            }
+
+            if (lich.tempoRisada >= lich.intervaloRisadaAlvo) {
+                lich.tempoRisada = 0;
+                lich.intervaloRisadaAlvo = rand(6, 12); // Reseta para o próximo ciclo
+
+                const faixasRisada = ["risada_lich_1", "risada_lich_2", "risada_lich_3"];
+                const risadaEscolhida = faixasRisada[Math.floor(Math.random() * faixasRisada.length)];
+                play(risadaEscolhida, { volume: 0.6 });
+            }
+        }
 
         const player = get("player")[0];
         if (!player) return;
@@ -39,10 +58,8 @@ export function criarLich(spawnX, spawnY) {
         if (lich.tempoAtaque >= 3 && !lich.isAttacking) {
             lich.tempoAtaque = 0;
             
-            // Calcula a distância no eixo X entre o chefe e o jogador
             const distanciaX = Math.abs(player.pos.x - lich.pos.x);
 
-            // Se o jogador estiver perto (menos de 250px), usa o Raio. Se estiver longe, Projétil.
             if (distanciaX < 250) {
                 iniciarAtaqueRaio(player.pos.x);
             } else {
@@ -51,12 +68,11 @@ export function criarLich(spawnX, spawnY) {
         }
     });
 
-    // ATAQUE 1: PROJÉTIL (Já existente)
     function iniciarAtaque(direcao) {
         lich.isAttacking = true;
         lich.use(sprite("lich_ataque"));
         lich.play("ataque");
-        lich.scale = vec2(0.7);
+        lich.scale = vec2(0.6);
         lich.flipX = (direcao < 0);
 
         const direcaoAtaque = direcao;
@@ -67,73 +83,108 @@ export function criarLich(spawnX, spawnY) {
         });
     }
 
-    // ATAQUE 2: NOVO ATAQUE DE RAIO VERTICAL
     function iniciarAtaqueRaio(alvoX) {
         lich.isAttacking = true;
         lich.use(sprite("lich_ataque"));
         lich.play("ataque");
-        lich.scale = vec2(0.7);
-        // O chefe vira para onde vai soltar o raio
+        lich.scale = vec2(0.6);
         lich.flipX = (alvoX < lich.pos.x);
 
-        wait(0.2, () => {
-            if (lich.exists() && !lich.isDead) {
-                // Cria um aviso visual no chão ou perto da área (opcional, mas bom para game feel)
-                const aviso = add([
-                    rect(30, 800), // Um pilar longo transparente
-                    pos(alvoX, -200), // Começa lá de cima do mapa
-                    color(0, 200, 255),
-                    opacity(0.3), // Apenas um "fantasma" verde
-                    lifespan(0.5) // Fica por meio segundo avisando onde o raio vai cair
-                ]);
+        let tempoEsperaDisparo = 0.2;
 
-                // Depois de 0.5s de aviso, o raio cai!
-                wait(0.5, () => {
-                    invocarRaioFisico(alvoX);
-                });
+        const controleDisparo = onUpdate(() => {
+            if (lich.paused) return; 
+            
+            tempoEsperaDisparo -= dt();
+            if (tempoEsperaDisparo <= 0) {
+                controleDisparo.cancel();
+                if (lich.exists() && !lich.isDead) {
+                    criarAvisoRaio(alvoX);
+                }
+            }
+        });
+    }
+
+    function criarAvisoRaio(alvoX) {
+        // --- TOCA O SOM DE CARREGAMENTO DO RAIO (FEIXE) QUANDO O AVISO APARECE ---
+        play("som_carregando_raio", { 
+            volume: 0.7, 
+            speed: 2 // <--- Ajuste este valor para controlar a velocidade do áudio
+        });
+
+        const aviso = add([
+            rect(30, 800),
+            pos(alvoX, -200),
+            color(0, 200, 255),
+            opacity(0.3),
+            "avisoRaio",
+            { tempoVida: 0.5 } 
+        ]);
+
+        const controleAviso = aviso.onUpdate(() => {
+            if (aviso.paused) return;
+
+            aviso.tempoVida -= dt();
+            if (aviso.tempoVida <= 0) {
+                controleAviso.cancel();
+                if (aviso.exists()) destroy(aviso);
+                invocarRaioFisico(alvoX);
             }
         });
     }
 
     function invocarRaioFisico(alvoX) {
-        // Encontra todos os blocos do teto/chão ("ground") que estão próximos ao eixo X do ataque
-        const blocosSolidos = get("ground");
-        let limiteY = 1200; // Ponto mais baixo do mapa por padrão
-        const origemRaioY = -200; // O raio vem lá do alto (fora da tela)
+        // --- TOCA O SOM DE IMPACTO QUANDO O RAIO BATE NO CHÃO ---
+        play("som_batida_raio", { volume: 0.8 });
 
-        // Vamos procurar qual bloco sólido está bloqueando o caminho vertical do raio!
+        const blocosSolidos = get("ground");
+        let limiteY = 1200; 
+        const origemRaioY = -200; 
+
         blocosSolidos.forEach(bloco => {
-            // Se o bloco estiver cruzando com a linha de tiro do raio no eixo X
             if (bloco.pos.x <= alvoX + 15 && bloco.pos.x + 48 >= alvoX - 15) { 
-                // E se esse bloco estiver mais alto que o nosso limite Y atual
                 if (bloco.pos.y < limiteY) {
-                    limiteY = bloco.pos.y; // O novo limite de impacto do raio passa a ser o teto desse bloco!
+                    limiteY = bloco.pos.y; 
                 }
             }
         });
 
         const alturaDoRaio = limiteY - origemRaioY;
+        const larguraRaio = 20;
 
-        // Cria o Raio Visual e Hitbox
         const raio = add([
-            rect(20, alturaDoRaio), // Estica o retângulo até bater no bloco!
+            rect(larguraRaio, alturaDoRaio), 
             pos(alvoX, origemRaioY),
-            color(0, 200, 255),     // Azul
-            area(),                 // Tem colisão!
-            "raioLich",             // Tag para dar dano no jogador
+            color(0, 200, 255),     
+            area(),                 
+            "raioLich",             
             opacity(1),
-            lifespan(0.3, { fade: 0.1 }) // Fica ativo por 0.3 segundos e depois desaparece suavemente
+            { tempoVida: 0.3 }
         ]);
 
-        // Cria uma explosão na ponta onde o raio bateu no bloco/chão
-        criarExplosao(vec2(alvoX, limiteY));
-    }
+        const controleRaio = raio.onUpdate(() => {
+            if (raio.paused) return;
 
+            raio.tempoVida -= dt();
+            
+            if (raio.tempoVida <= 0.1) {
+                raio.opacity = Math.max(0, raio.tempoVida / 0.1);
+            }
+
+            if (raio.tempoVida <= 0) {
+                controleRaio.cancel();
+                if (raio.exists()) destroy(raio);
+            }
+        });
+
+        criarExplosaoAzul(vec2(alvoX + (larguraRaio / 2), limiteY));
+    }
 
     lich.onAnimEnd((anim) => {
         if (anim === "ataque" && !lich.isDead) {
             lich.use(sprite("lich"));
-            lich.scale = vec2(0.45);
+            lich.play("walk"); 
+            lich.scale = vec2(0.4);
             lich.isAttacking = false;
         }
     });
@@ -143,6 +194,12 @@ export function criarLich(spawnX, spawnY) {
     }
 
     function atirarProjetil(posicaoLich, direcao) {
+        // Toca a risada em loop e armazena na constante somRisada
+        const somRisada = play("risada_projetil_lich", { 
+            volume: 2, 
+            loop: true 
+        });
+
         const proj = add([
             sprite("projetil-lich", { anim: "voo" }),
             pos(posicaoOrigemProj(posicaoLich, direcao)),
@@ -153,7 +210,8 @@ export function criarLich(spawnX, spawnY) {
             { 
                 dir: direcao, 
                 velocidade: 250,
-                tempoVida: 4 
+                tempoVida: 4,
+                somLoop: somRisada // Guarda a referência do som no objeto do projétil
             }
         ]);
 
@@ -162,18 +220,36 @@ export function criarLich(spawnX, spawnY) {
         proj.onUpdate(() => {
             proj.pos.x += proj.dir * proj.velocidade * dt();
             proj.tempoVida -= dt();
+            
             if (proj.tempoVida <= 0) {
+                if (proj.somLoop) proj.somLoop.paused = true;
                 if (proj.exists()) destroy(proj);
             }
         });
-    }
 
+        proj.destruirComExplosao = () => {
+            if (proj.somLoop) proj.somLoop.paused = true;
+            play("projetil_lich_explodindo", { volume: 0.8 });
+            criarExplosaoVerde(proj.pos);
+            destroy(proj);
+        };
+    }
     return lich;
 }
 
-export function criarExplosao(posicao) {
+export function criarExplosaoVerde(posicao) {
     add([
         sprite("explosao_lich", { anim: "explodir" }),
+        pos(posicao),
+        anchor("center"),
+        scale(0.3), 
+        lifespan(0.4) 
+    ]);
+}
+
+export function criarExplosaoAzul(posicao) {
+    add([
+        sprite("explosao_azul", { anim: "explodir" }),
         pos(posicao),
         anchor("center"),
         scale(0.3), 

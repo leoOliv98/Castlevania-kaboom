@@ -56,7 +56,14 @@ loadSprite("esqueleto_ataque", "frontend/assets/sprites/Esqueleto-atacando.png",
 loadSprite("esqueleto_caido", "frontend/assets/sprites/esqueleto-caido.png");
 
 // Carregamento do Lich e seu projétil
-loadSprite("lich", "frontend/assets/sprites/lich.png");
+loadSprite("lich", "frontend/assets/sprites/lich-voando.png", {
+    sliceX: 5, 
+    sliceY: 1,
+    anims: {
+        "idle": { from: 0, to: 0 },
+        "walk": { from: 0, to: 4, speed: 5, loop: true }
+    }
+});
 loadSprite("lich_ataque", "frontend/assets/sprites/lich-atacando-projetil.png", {
     sliceX: 4, // A imagem possui exatamente 4 quadros
     sliceY: 1,
@@ -78,7 +85,13 @@ loadSprite("explosao_lich", "frontend/assets/sprites/explosao-caveira.png", {
         "explodir": { from: 0, to: 4, speed: 12, loop: false }
     }
 });
-
+loadSprite("explosao_azul", "frontend/assets/sprites/explosao-azul.png", {
+    sliceX: 5, // A spritesheet possui 5 quadros horizontais
+    sliceY: 1,
+    anims: {
+        "explodir": { from: 0, to: 4, speed: 12, loop: false }
+    }
+});
 
 // LISTA DE TODOS OS TILES DO CASTELO (Mapeados exatamente na ordem do Tiled Editor)
 const tilesets = [
@@ -103,9 +116,30 @@ tilesets.forEach((nomeImagem, index) => {
 });
 
 // CARREGAMENTO DOS ÁUDIOS
+// FASE 1
 loadSound("musica_fase1", "frontend/assets/sounds/level-1.mp3");
+
+// PLAYER
+loadSound("voz_hit_1", "frontend/assets/sounds/mago-sendo-acertado-1.mp3");
+loadSound("voz_hit_2", "frontend/assets/sounds/mago-sendo-acertado-2.mp3");
+loadSound("voz_hit_3", "frontend/assets/sounds/mago-sendo-acertado-3.mp3");
 loadSound("som_ataque", "frontend/assets/sounds/player-ataque-espada.mp3");
+loadSound("som_morte_jogador", "frontend/assets/sounds/mago-morrendo.mp3");
+
+// ESQUELETO
+loadSound("som_ataque_esqueleto", "frontend/assets/sounds/ataque-esqueleto.mp3");
 loadSound("som_quebrar", "frontend/assets/sounds/esqueleto-quebrando.mp3");
+
+// LICH
+loadSound("risada_lich_1", "frontend/assets/sounds/risada-lich-1.mp3");
+loadSound("risada_lich_2", "frontend/assets/sounds/risada-lich-2.mp3");
+loadSound("risada_lich_3", "frontend/assets/sounds/risada-lich-3.mp3");
+loadSound("som_carregando_raio", "frontend/assets/sounds/feixe-raio-lich.mp3");
+loadSound("som_batida_raio", "frontend/assets/sounds/raio-batendo.mp3");
+loadSound("risada_projetil_lich", "frontend/assets/sounds/risada-projetil-lich.mp3");
+loadSound("projetil_lich_explodindo", "frontend/assets/sounds/projetil-lich-explodindo.mp3");
+loadSound("dano_lich", "frontend/assets/sounds/dano-lich.mp3");
+loadSound("morte_lich", "frontend/assets/sounds/morte-lich.mp3");
 
 // REGISTRO DAS CENAS
 scene("menu", cenaMenu);

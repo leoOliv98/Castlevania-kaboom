@@ -1,6 +1,6 @@
 import { criarJogador } from "../entidades/jogador.js";
 import { criarEsqueleto } from "../entidades/inimigos.js";
-import { criarLich, criarExplosao } from "../entidades/lich.js";
+import { criarLich, criarExplosaoVerde, criarExplosaoAzul } from "../entidades/lich.js";
 
 export async function cenaJogo(data = { lives: 3 }) {
     setGravity(2400);
@@ -12,7 +12,7 @@ export async function cenaJogo(data = { lives: 3 }) {
 
     // INICIA A MÚSICA DE FUNDO DA FASE 1
     const musicaFase = play("musica_fase1", {
-        volume: 0.5,   // Ajuste de 0.0 (mudo) a 1.0 (máximo)
+        volume: 0.4,   // Ajuste de 0.0 (mudo) a 1.0 (máximo)
         loop: true     // Mantém a música repetindo em loop contínuo
     });
 
@@ -71,22 +71,29 @@ export async function cenaJogo(data = { lives: 3 }) {
         if (isPaused) {
             player.paused = true;
             
-            // Pausa esqueletos, o chefe Lich e todos os projéteis ativos na tela
+            // Pausa esqueletos, chefe, projéteis, raios E O SOM EM LOOP DO PROJÉTIL
             get("enemy").forEach(e => { e.paused = true; });
             get("boss").forEach(b => { b.paused = true; });
-            get("projetilLich").forEach(p => { p.paused = true; });
+            get("projetilLich").forEach(p => { 
+                p.paused = true; 
+                if (p.somLoop) p.somLoop.paused = true; // Pausa o som da risada do projétil
+            });
+            get("raioLich").forEach(r => { r.paused = true; });
+            get("avisoRaio").forEach(a => { a.paused = true; }); 
             
-            // Pausa a música de fundo mantendo o ponto atual
             musicaFase.paused = true; 
         } else {
             player.paused = false;
             
-            // Retoma o movimento de todas as entidades
             get("enemy").forEach(e => { e.paused = false; });
             get("boss").forEach(b => { b.paused = false; });
-            get("projetilLich").forEach(p => { p.paused = false; });
+            get("projetilLich").forEach(p => { 
+                p.paused = false; 
+                if (p.somLoop) p.somLoop.paused = false; // Retoma o som da risada do projétil
+            });
+            get("raioLich").forEach(r => { r.paused = false; });
+            get("avisoRaio").forEach(a => { a.paused = false; }); 
             
-            // Retoma a música de fundo de onde parou
             musicaFase.paused = false; 
         }
     }
@@ -255,20 +262,72 @@ export async function cenaJogo(data = { lives: 3 }) {
     let barraBossAtiva = false; // Controla se o chefe já recebeu o primeiro golpe
 
     function triggerDeath() {
-        // CORREÇÃO: Pausa o som atribuindo true à propriedade paused do objeto de áudio
         if (musicaFase) {
             musicaFase.paused = true;
         }
+
+        // --- PARA O SOM DE TODOS OS PROJÉTEIS ATIVOS AO MORRER ---
+        get("projetilLich").forEach(proj => {
+            if (proj.somLoop) {
+                proj.somLoop.paused = true;
+            }
+            destroy(proj); // Opcional: remove os projéteis da tela para limpar o cenário
+        });
+
+        play("som_morte_jogador", { volume: 0.8 });
+
         go("death", { lives: currentLives - 1 });
+    }
+
+    // Função centralizada para aplicar dano, flash e knockback no Jogador
+    function causarDanoJogador(quantidadeDano, posInimigoX) {
+        if (player.isInvulnerable) return; // Evita dano múltiplo no mesmo segundo
+
+        // --- SISTEMA DE VOZES ALTERNADAS AO TOMAR HIT ---
+        const faixasVoz = ["voz_hit_1", "voz_hit_2", "voz_hit_3"];
+        // Escolhe aleatoriamente uma das 3 faixas para não ficar repetitivo
+        const somEscolhido = faixasVoz[Math.floor(Math.random() * faixasVoz.length)];
+        play(somEscolhido, { volume: 0.7 });
+
+        currentHp = Math.max(0, currentHp - quantidadeDano);
+        hpBar.width = (currentHp / maxHp) * 160;
+        
+        if (currentHp <= 0) {
+            triggerDeath();
+            return;
+        }
+
+        // --- 1. EFEITO VISUAL DE FLASH (PISCAR) ---
+        player.isInvulnerable = true;
+        let piscadas = 0;
+        const intervaloFlash = loop(0.1, () => {
+            player.opacity = player.opacity === 1 ? 0.3 : 1;
+            piscadas++;
+            if (piscadas >= 6) { // Pisca 3 vezes (total 0.6s de imunidade visual)
+                player.opacity = 1;
+                player.isInvulnerable = false;
+                intervaloFlash.cancel();
+            }
+        });
+
+        // --- 2. CONGELAR INPUTS BREVEMENTE E APLICAR KNOCKBACK SEGURO ---
+        player.isKnockbacked = true; 
+        
+        // Descobre o lado do perigo e aplica um tranco instantâneo na posição de forma segura
+        const direcaoPerigo = (player.pos.x > posInimigoX) ? 1 : -1;
+        player.pos.x += direcaoPerigo * 60; // Empurra 30 pixels para trás instantaneamente
+        player.pos.y -= 15;                // Dá um pequeno salto para cima
+
+        // Libera os inputs do jogador após 0.15 segundos
+        wait(0.15, () => {
+            player.isKnockbacked = false;
+        });
     }
 
     player.onCollide("deathZone", () => triggerDeath());
 
-    // NOVO: Quando o ataque do inimigo encosta no jogador (dano extra da espada do esqueleto)
-    player.onCollide("ataqueInimigo", () => {
-        currentHp = Math.max(0, currentHp - 40); // Tira 40 de HP no ataque
-        hpBar.width = (currentHp / maxHp) * 160;
-        if (currentHp <= 0) triggerDeath();
+    player.onCollide("ataqueInimigo", (enemy) => {
+      causarDanoJogador(40, enemy.pos.x);
     });
 
     // NOVO: Quando o ataque do jogador encosta no esqueleto (Transforma em pilha de ossos!)
@@ -277,9 +336,14 @@ export async function cenaJogo(data = { lives: 3 }) {
 
         play("som_quebrar", { volume: 0.7 });
         enemy.isDead = true; 
+
+        // Empurra o esqueleto para trás instantaneamente de forma segura
+        const dirEmpurrao = (enemy.pos.x > player.pos.x) ? 1 : -1;
+        enemy.pos.x += dirEmpurrao * 25; // Joga 25 pixels para trás
+        enemy.pos.y -= 10;               // Dá um pequeno tranco para cima
         
         enemy.use(sprite("esqueleto_caido")); 
-        
+
         // ADICIONE OU AJUSTE A ESCALA DA PILHA DE OSSOS AQUI:
         enemy.use(scale(0.08)); // Mude este valor para deixar maior ou menor (ex: 0.35, 0.45)
 
@@ -334,6 +398,8 @@ export async function cenaJogo(data = { lives: 3 }) {
                 controleRespawn.cancel();
             }
         });
+
+        destroy(ataque);
     });
 
     // Quando o ataque para baixo do jogador encosta no esqueleto
@@ -342,6 +408,11 @@ export async function cenaJogo(data = { lives: 3 }) {
 
         play("som_quebrar", { volume: 0.7 });
         enemy.isDead = true; 
+
+        // Empurra o esqueleto para trás instantaneamente de forma segura
+        const dirEmpurrao = (enemy.pos.x > player.pos.x) ? 1 : -1;
+        enemy.pos.x += dirEmpurrao * 25; 
+        enemy.pos.y -= 10;
 
         enemy.use(sprite("esqueleto_caido")); 
 
@@ -393,38 +464,60 @@ export async function cenaJogo(data = { lives: 3 }) {
                 controleRespawn.cancel();
             }
         });
+
+        destroy(ataque);
     });
 
     player.onCollide("projetilLich", (proj) => {
-        // Cria a explosão na posição atual do projétil antes de destruí-lo
-        criarExplosao(proj.pos);
-
-        destroy(proj);
-        currentHp = Math.max(0, currentHp - 30);
-        hpBar.width = (currentHp / maxHp) * 160;
-        if (currentHp <= 0) triggerDeath();
+      causarDanoJogador(30, proj.pos.x);
+      
+      // Chama a função de destruição com som de explosão e parada da risada
+      if (proj.destruirComExplosao) {
+          proj.destruirComExplosao();
+      } else {
+          criarExplosaoVerde(proj.pos);
+          destroy(proj);
+      }
     });
 
-    player.onCollide("raioLich", () => {
-        // Tira 80 de dano (80% da vida total que é 100)
-        currentHp = Math.max(0, currentHp - 80); 
-        hpBar.width = (currentHp / maxHp) * 160;
-        if (currentHp <= 0) triggerDeath();
+    player.onCollide("raioLich", (raio) => {
+      causarDanoJogador(80, raio.pos.x);
     });
 
     // Dano do Ataque Lateral do Jogador no Lich
     onCollide("ataqueJogador", "boss", (ataque, boss) => {
         processarDanoBoss(boss);
+        destroy(ataque);
     });
 
     // Dano do Ataque Para Baixo do Jogador no Lich
     onCollide("ataqueBaixoJogador", "boss", (ataque, boss) => {
         processarDanoBoss(boss);
+        destroy(ataque);
     });
 
     // Função central para aplicar o dano de 5 HP por golpe
     function processarDanoBoss(boss) {
         if (boss.isDead) return;
+
+        play("dano_lich", { volume: 0.9 });
+
+        // --- EFEITO VISUAL DE PISCAR DO LICH ---
+        let piscadas = 0;
+        const intervaloFlash = loop(0.1, () => {
+            boss.opacity = boss.opacity === 1 ? 0.3 : 1;
+            piscadas++;
+            if (piscadas >= 4) { // Pisca 2 vezes rapidamente
+                boss.opacity = 1;
+                intervaloFlash.cancel();
+            }
+        });
+
+        // --- KNOCKBACK DO LICH ---
+        // Descobre a direção do impacto em relação ao jogador e empurra o chefe para trás
+        const direcaoEmpurraoBoss = (boss.pos.x > player.pos.x) ? 1 : -1;
+        boss.pos.x += direcaoEmpurraoBoss * 30; // Joga 30 pixels para trás
+        boss.pos.y -= 10;                      // Dá um pequeno tranco para cima
 
         // Se for o primeiro golpe, revela a barra de vida no topo da tela!
         if (!barraBossAtiva) {
@@ -451,7 +544,10 @@ export async function cenaJogo(data = { lives: 3 }) {
         // Se a vida chegar a zero (6º golpe), o Lich morre!
         if (boss.hp <= 0) {
             boss.isDead = true;
-            criarExplosao(boss.pos);
+
+            play("morte_lich", { volume: 0.9 });
+
+            criarExplosaoAzul(boss.pos);
             destroy(boss);
 
             // Esconde a barra de vida após derrotá-lo
@@ -471,6 +567,33 @@ export async function cenaJogo(data = { lives: 3 }) {
             ]);
         }
     }
+
+    // Quando o jogador colide com o esqueleto por baixo
+    player.onCollide("enemy", (enemy) => {
+        if (enemy.isDead) return;
+
+        // Se o jogador estiver subindo (pulando) e a posição Y do jogador for inferior à do esqueleto
+        if (player.pos.y > enemy.pos.y && player.isGrounded() === false) {
+            // Joga o esqueleto fortemente para cima
+            enemy.pos.y -= 40; 
+            
+            // Se o esqueleto usa física de pulo/gravidade, podemos dar um impulso negativo de velocidade se ele tiver body()
+            if (enemy.jump) {
+                enemy.jump(600);
+            }
+        }
+    });
+
+    // Quando o jogador colide com o chefe Lich por baixo
+    player.onCollide("boss", (boss) => {
+        if (boss.isDead) return;
+
+        // Verifica se o jogador está abaixo do Lich e subindo
+        if (player.pos.y > boss.pos.y) {
+            // Joga o Lich instantaneamente para cima
+            boss.pos.y -= 50; 
+        }
+    });
 
     // ATUALIZAÇÃO DA CÂMERA (Travada nos eixos X e Y)
     player.onUpdate(() => {

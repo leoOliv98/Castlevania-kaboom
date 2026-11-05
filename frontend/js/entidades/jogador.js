@@ -13,9 +13,9 @@ export function criarJogador(spawnX, spawnY) {
     const SPEED = 300;
     const JUMP_FORCE = 1100;
 
-    // CONTROLES DE MOVIMENTO
+    // CONTROLES DE MOVIMENTO ATUALIZADOS COM O KNOCKBACK
     onKeyDown("left", () => {
-        if (player.isAttacking || player.paused) return; 
+        if (player.isAttacking || player.paused || player.isKnockbacked) return; // <- Adicionado "player.isKnockbacked" aqui
         player.move(-SPEED, 0);
         player.flipX = true;
         ultimaDirecao = true;
@@ -23,7 +23,7 @@ export function criarJogador(spawnX, spawnY) {
     });
 
     onKeyDown("right", () => {
-        if (player.isAttacking || player.paused) return;
+        if (player.isAttacking || player.paused || player.isKnockbacked) return; // <- Adicionado "player.isKnockbacked" aqui
         player.move(SPEED, 0);
         player.flipX = false;
         ultimaDirecao = false;

@@ -44,6 +44,8 @@ export function criarEsqueleto(spawnX, spawnY, larguraTotalMapa) {
                 wait(0.25, () => {
                     // Impede o ataque se o esqueleto foi destruído ou MORTO durante o aviso
                     if (!enemy.exists() || enemy.isDead) return;
+                    
+                    play("som_ataque_esqueleto", { volume: 0.6 });
 
                     const offsetHitbox = direcaoAtk * 40;
 
@@ -116,6 +118,8 @@ export function criarEsqueleto(spawnX, spawnY, larguraTotalMapa) {
 
     enemy.onAnimEnd((anim) => {
         if (anim === "ataque" && !enemy.isDead) { // Só volta a andar se não morreu
+            play("som_ataque_esqueleto", { volume: 0.6 });
+
             enemy.isAttacking = false;
             enemy.use(sprite("esqueleto"));
             enemy.play("walk");
