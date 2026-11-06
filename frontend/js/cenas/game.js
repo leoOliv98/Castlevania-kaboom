@@ -1,9 +1,17 @@
 import { criarJogador } from "../entidades/jogador.js";
-import { criarEsqueleto } from "../entidades/inimigos.js";
+import { criarEsqueleto } from "../entidades/esqueletos.js";
 import { criarLich, criarExplosaoVerde, criarExplosaoAzul } from "../entidades/lich.js";
+import { LEVELS, LEVEL_PADRAO } from "../levels.js";
+import { carregarMapa } from "../mapa.js";
+import { criarLobo } from "../entidades/lobo.js";
 
 export async function cenaJogo(data = { lives: 3 }) {
     setGravity(2400);
+
+    // Qual fase carregar (ver levels.js). Sem "level" no data, abre a fase padrão.
+    const idLevel = data.level ?? LEVEL_PADRAO;
+    const level = LEVELS[idLevel];
+    if (!level) throw new Error(`Level "${idLevel}" não existe em levels.js`);
 
     // --- REINICIA O INVENTÁRIO AO ENTRAR NA FASE/RESSUSCITAR ---
     sistemaInventario.itens = [];
@@ -14,8 +22,8 @@ export async function cenaJogo(data = { lives: 3 }) {
     let currentLives = data.lives; 
     let isPaused = false; 
 
-    // INICIA A MÚSICA DE FUNDO DA FASE 1
-    const musicaFase = play("musica_fase1", {
+    // INICIA A MÚSICA DE FUNDO DA FASE (definida em levels.js)
+    const musicaFase = play(level.musica, {
         volume: 0.4,   // Ajuste de 0.0 (mudo) a 1.0 (máximo)
         loop: true     // Mantém a música repetindo em loop contínuo
     });
@@ -161,89 +169,38 @@ export async function cenaJogo(data = { lives: 3 }) {
         }
     });
 
-    const response = await fetch("frontend/assets/levels/level-1.tmj");
-    const mapJson = await response.json();
+    // CARREGA O MAPA (tiles, colisões e spawns) - o formato depende do "tipo" do level em levels.js
+    const mapa = await carregarMapa(level);
+    const { larguraTotalMapa, alturaTotalMapa } = mapa;
 
-    const mapWidth = mapJson.width;
-    const tileW = mapJson.tilewidth;
-    const tileH = mapJson.tileheight;
+    let spawnPlayerX = mapa.spawnPlayer.x, spawnPlayerY = mapa.spawnPlayer.y;
+    const esqueletosSpawns = mapa.spawnsEsqueletos; // um item para cada "esqueleto-spawn" do Tiled
+    const lobosSpawns = mapa.spawnsLobos;
+    const spawnLich = mapa.spawnLich;           // posição do "lich-spawn" (ou null)
 
-    const tileLayers = mapJson.layers.filter(layer => layer.type === "tilelayer");
-
-    // NOVO: Lista exata dos IDs que devem ser tratados como chão ou paredes sólidas
-    const blocosSolidos = [31, 29, 28, 30, 27, 24, 22, 38, 4, 35];
-
-    tileLayers.forEach(layer => {
-        const mapData = layer.data;
-
-        mapData.forEach((tileId, index) => {
-            if (tileId !== 0) {
-                const x = (index % mapWidth) * tileW;
-                const y = Math.floor(index / mapWidth) * tileH;
-                
-                // O Kaboom confere se o tileId atual está dentro da nossa lista de blocos sólidos
-                const isSolid = blocosSolidos.includes(tileId);
-                
-                const componentes = [
-                    sprite(`tile_${tileId}`),
-                    pos(x, y),
-                    // Blocos sólidos ficam na mesma profundidade do jogador, decorações vão pro fundo
-                    z(isSolid ? 0 : -50) 
-                ];
-
-                // Adiciona a colisão APENAS se o tileId for um dos listados
-                if (isSolid) {
-                    componentes.push(area());
-                    componentes.push(body({ isStatic: true }));
-                    componentes.push("ground");
-                }
-
-                add(componentes);
-            }
-        });
-    });
-
-    const objectLayer = mapJson.layers.find(layer => layer.type === "objectgroup");
-    let spawnPlayerX = 150, spawnPlayerY = 100;
-    
-    // Vamos criar uma lista (array) para guardar as posições de todos os inimigos
-    let inimigosSpawns = [];
-    let spawnLich = null; // Variável para guardar a posição do chefe
-
-    if (objectLayer && objectLayer.objects) {
-        // Pega o spawn do jogador
-        const pObj = objectLayer.objects.find(obj => obj.name === "player-spawn");
-        if (pObj) { spawnPlayerX = pObj.x; spawnPlayerY = pObj.y; }
-
-        // Pega TODOS os objetos que têm o nome "enemy_spawn" no Tiled
-        const eObjs = objectLayer.objects.filter(obj => obj.name === "enemy-spawn");
-        
-        // Se encontrou algum, adiciona na nossa lista de coordenadas
-        if (eObjs.length > 0) {
-            eObjs.forEach(e => {
-                inimigosSpawns.push({ x: e.x, y: e.y });
-            });
+    // FUNDO
+    const fundo = level.fundo;
+    if (fundo) {
+        if (fundo.modo === "tela") {
+            // Fixo na tela: acompanha a câmera, serve para mapas grandes
+            add([ sprite(fundo.sprite), pos(0, 0), scale(fundo.escala ?? 1), fixed(), z(-100) ]);
         } else {
-            // Caso você esqueça de colocar no Tiled, coloca um padrão para não quebrar
-            inimigosSpawns.push({ x: 500, y: 100 });
-        }
-
-        // ADICIONE ESTE BLOCO PARA CAPTURAR O LICH-SPAWN DO SEU JSON:
-        const lichObj = objectLayer.objects.find(obj => obj.name === "lich-spawn");
-        if (lichObj) {
-        spawnLich = { x: lichObj.x, y: lichObj.y };
+            add([ sprite(fundo.sprite), pos(fundo.x ?? 0, fundo.y ?? 0), z(-100), scale(fundo.escala ?? 1) ]);
         }
     }
 
-    add([ sprite("background_fase1"), pos(-200, -300), z(-100), scale(3) ]);
-
-    const larguraTotalMapa = mapWidth * tileW;
-    add([ rect(16, 2000), pos(-16, -500), area(), body({ isStatic: true }), opacity(0) ]);
-    add([ rect(16, 2000), pos(larguraTotalMapa, -500), area(), body({ isStatic: true }), opacity(0) ]);
-    add([ rect(larguraTotalMapa + 400, 100), pos(-200, 1100), area(), body({ isStatic: true }), opacity(0), "deathZone" ]);
+    // LIMITES DO MAPA (paredes laterais e zona de morte), proporcionais ao tamanho do mapa
+    add([ rect(16, alturaTotalMapa + 1040), pos(-16, -500), area(), body({ isStatic: true }), opacity(0) ]);
+    add([ rect(16, alturaTotalMapa + 1040), pos(larguraTotalMapa, -500), area(), body({ isStatic: true }), opacity(0) ]);
+    add([ rect(larguraTotalMapa + 400, 100), pos(-200, alturaTotalMapa + 140), area(), body({ isStatic: true }), opacity(0), "deathZone" ]);
 
     // INSTANCIAÇÃO DAS ENTIDADES MODULARIZADAS
-    const player = criarJogador(spawnPlayerX, spawnPlayerY);
+    const player = criarJogador(spawnPlayerX, spawnPlayerY, { hitboxEstreita: level.hitboxEstreita });
+    // A câmera já começa em cima do jogador (evita "voar" do canto da tela em mapas altos)
+    camPos(
+        Math.max(1280 / 2, Math.min(larguraTotalMapa - 1280 / 2, spawnPlayerX)),
+        Math.max(600 / 2, Math.min(alturaTotalMapa - 600 / 2, spawnPlayerY))
+    );
     // --- PROTEÇÃO DE SPAWN CONTRA A ZONA DE MORTE ---
     // Isso evita que, se o mapa demorar 1 milissegundo extra para desenhar o chão, 
     // o jogador morra instantaneamente.
@@ -251,10 +208,15 @@ export async function cenaJogo(data = { lives: 3 }) {
     wait(1.5, () => { // 1.5 segundos de imunidade inicial ao abismo
         isSpawning = false;
     });
-    // Cria um esqueleto para cada ponto "enemy_spawn" criado no Tiled Editor!
-    inimigosSpawns.forEach(spawn => {
+    // Cria um esqueleto para cada ponto "esqueleto_spawn" criado no Tiled Editor!
+    esqueletosSpawns.forEach(spawn => {
         criarEsqueleto(spawn.x, spawn.y, larguraTotalMapa);
     });
+    
+    lobosSpawns.forEach(spawn => {
+    criarLobo(spawn.x, spawn.y);
+    });
+    
     // ADICIONE ESTE BLOCO PARA CRIAR O LICH SE ELE TIVER SIDO ENCONTRADO NO MAPA:
     if (spawnLich) {
         criarLich(spawnLich.x, spawnLich.y);
@@ -378,7 +340,7 @@ export async function cenaJogo(data = { lives: 3 }) {
 
         play("som_morte_jogador", { volume: 0.8 });
 
-        go("death", { lives: currentLives - 1 });
+        go("death", { lives: currentLives - 1, level: idLevel });
     }
 
     // Função centralizada para aplicar dano, flash e knockback no Jogador
@@ -448,9 +410,16 @@ export async function cenaJogo(data = { lives: 3 }) {
       causarDanoJogador(40, enemy.pos.x);
     });
 
-    // NOVO: Quando o ataque do jogador encosta no esqueleto (Transforma em pilha de ossos!)
+    // NOVO: Quando o ataque do jogador encosta no esqueleto (Transforma em pilha de ossos!) ou mata o lobo
     onCollide("ataqueJogador", "enemy", (ataque, enemy) => {
         if (enemy.isDead) return; 
+
+        // Se o inimigo for o lobo, disparamos o gatilho de morte e saímos da função
+        if (enemy.isLobo) {
+            enemy.trigger("death"); // Isso vai tocar o som de morte e destruir o lobo lá no lobo.js
+            destroy(ataque);
+            return; // Interrompe a execução para não aplicar a lógica de ressurreição da caveira
+        }
 
         play("som_quebrar", { volume: 0.7 });
         enemy.isDead = true; 
@@ -462,8 +431,8 @@ export async function cenaJogo(data = { lives: 3 }) {
         
         enemy.use(sprite("esqueleto_caido")); 
 
-        // ADICIONE OU AJUSTE A ESCALA DA PILHA DE OSSOS AQUI:
-        enemy.use(scale(0.08)); // Mude este valor para deixar maior ou menor (ex: 0.35, 0.45)
+        // Escala da pilha de ossos:
+        enemy.use(scale(0.08)); 
 
         enemy.use(area({ 
             width: 45, 
@@ -484,7 +453,6 @@ export async function cenaJogo(data = { lives: 3 }) {
         
         const controleRespawn = enemy.onUpdate(() => {
             // Como o esqueleto mantém a tag "enemy", o togglePause() altera o enemy.paused dele.
-            // Quando pausado, o Kaboom automaticamente congela o onUpdate, travando esse cronômetro!
             enemy.tempoRespawn -= dt();
             
             if (enemy.tempoRespawn <= 0) {
@@ -495,7 +463,7 @@ export async function cenaJogo(data = { lives: 3 }) {
                     enemy.use(sprite("esqueleto")); 
                     enemy.play("walk");
                     
-                    // ADICIONE ESTA LINHA PARA RESTAURAR O TAMANHO NORMAL AO REVIVER:
+                    // RESTAURAR O TAMANHO NORMAL AO REVIVER:
                     enemy.use(scale(0.4));
 
                     enemy.use(area({ 
@@ -512,7 +480,6 @@ export async function cenaJogo(data = { lives: 3 }) {
                         lifespan(0.5, { fade: 0.5 })
                     ]);
                 }
-                // Encerra esse cronômetro para ele não continuar rodando em loop
                 controleRespawn.cancel();
             }
         });
@@ -520,9 +487,16 @@ export async function cenaJogo(data = { lives: 3 }) {
         destroy(ataque);
     });
 
-    // Quando o ataque para baixo do jogador encosta no esqueleto
+    // Quando o ataque para baixo do jogador encosta no inimigo
     onCollide("ataqueBaixoJogador", "enemy", (ataque, enemy) => {
         if (enemy.isDead) return;
+
+        // Se o inimigo for o lobo, disparamos o gatilho de morte e saímos da função
+        if (enemy.isLobo) {
+            enemy.trigger("death"); // Toca o som de morte e destrói o lobo
+            destroy(ataque);
+            return; 
+        }
 
         play("som_quebrar", { volume: 0.7 });
         enemy.isDead = true; 
@@ -534,8 +508,7 @@ export async function cenaJogo(data = { lives: 3 }) {
 
         enemy.use(sprite("esqueleto_caido")); 
 
-        // ADICIONE OU AJUSTE A ESCALA DA PILHA DE OSSOS AQUI TAMBÉM:
-        enemy.use(scale(0.08)); // Mude para o mesmo valor do ataque lateral
+        enemy.use(scale(0.08)); 
 
         enemy.use(area({ 
             width: 45, 
@@ -562,7 +535,6 @@ export async function cenaJogo(data = { lives: 3 }) {
                     enemy.use(sprite("esqueleto")); 
                     enemy.play("walk");
 
-                    // ADICIONE ESTA LINHA PARA RESTAURAR O TAMANHO NORMAL AO REVIVER:
                     enemy.use(scale(0.4));
 
                     enemy.use(area({ 
@@ -723,8 +695,7 @@ export async function cenaJogo(data = { lives: 3 }) {
         // Limites horizontais (já funcionavam)
         newX = Math.max(1280 / 2, Math.min(larguraTotalMapa - (1280 / 2), newX));
 
-        // NOVOS: Limites verticais baseados na altura do mapa (20 tiles * 48 pixels = 960 pixels de altura total)
-        const alturaTotalMapa = mapJson.height * tileH; 
+        // Limites verticais baseados na altura do mapa (alturaTotalMapa vem do carregarMapa)
         newY = Math.max(600 / 2, Math.min(alturaTotalMapa - (600 / 2), newY));
 
         camPos(Math.round(newX), Math.round(newY));

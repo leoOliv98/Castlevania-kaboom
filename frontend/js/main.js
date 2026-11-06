@@ -13,7 +13,7 @@ kaboom({
 
 
 // CARREGAMENTO DOS ASSETS
-loadSprite("background_fase1", "frontend/assets/sprites/fundo-castelo.png");
+loadSprite("background_fase1", "frontend/assets/sprites/fundo-floresta.png");
 
 loadSprite("player", "frontend/assets/sprites/Personagem-Principal-andando.png", {
     sliceX: 6,
@@ -24,6 +24,32 @@ loadSprite("player", "frontend/assets/sprites/Personagem-Principal-andando.png",
     }
 }); 
 
+loadSprite("lobo_correndo", "frontend/assets/sprites/lobo-correndo.png", {
+    sliceX: 4, // Agora são 4 quadros na horizontal (colunas)
+    sliceY: 2, // E 2 quadros na vertical (linhas)
+    anims: {
+        // A animação continua indo do quadro 0 ao 7. 
+        // O Kaboom lê da esquerda para direita, de cima para baixo automaticamente.
+        "walk": { from: 0, to: 7, speed: 12, loop: true } 
+    }
+});
+
+loadSprite("lobo_atacando", "frontend/assets/sprites/lobo-atacando.png", {
+    sliceX: 5,
+    sliceY: 1,
+    anims: {
+        "ataque": { from: 0, to: 4, speed: 12, loop: false }
+    }
+});
+
+loadSprite("lobo_morrendo", "frontend/assets/sprites/lobo-morrendo.png", {
+    sliceX: 5,
+    sliceY: 1,
+    anims: {
+        morte: { from: 0, to: 4, loop: false, speed: 10 }
+    }
+});
+
 loadSprite("esqueleto", "frontend/assets/sprites/Esqueleto-andando.png", {
     sliceX: 8, 
     sliceY: 1,
@@ -32,6 +58,14 @@ loadSprite("esqueleto", "frontend/assets/sprites/Esqueleto-andando.png", {
         "walk": { from: 0, to: 7, speed: 8, loop: true }
     }
 });
+
+loadSprite("esqueleto_ataque", "frontend/assets/sprites/Esqueleto-atacando.png", {
+    sliceX: 5, // MUDE AQUI: Coloque o número exato de quadros do esqueleto atacando
+    sliceY: 1,
+    anims: { "ataque": { from: 0, to: 4, speed: 10, loop: false } }
+});
+
+loadSprite("esqueleto_caido", "frontend/assets/sprites/esqueleto-caido.png");
 
 loadSprite("player_ataque", "frontend/assets/sprites/Personagem-Principal-atacando.png", {
     sliceX: 5, // MUDE AQUI: Coloque o número exato de quadros da animação de ataque
@@ -46,14 +80,6 @@ loadSprite("player_ataque_baixo", "frontend/assets/sprites/ataque-pulo-para-baix
         "ataque_baixo": { from: 0, to: 3, speed: 12, loop: false } 
     }
 });
-
-loadSprite("esqueleto_ataque", "frontend/assets/sprites/Esqueleto-atacando.png", {
-    sliceX: 5, // MUDE AQUI: Coloque o número exato de quadros do esqueleto atacando
-    sliceY: 1,
-    anims: { "ataque": { from: 0, to: 4, speed: 10, loop: false } }
-});
-
-loadSprite("esqueleto_caido", "frontend/assets/sprites/esqueleto-caido.png");
 
 // Carregamento do Lich e seu projétil
 loadSprite("lich", "frontend/assets/sprites/lich-voando.png", {
@@ -129,6 +155,10 @@ loadSound("voz_hit_2", "frontend/assets/sounds/mago-sendo-acertado-2.mp3");
 loadSound("voz_hit_3", "frontend/assets/sounds/mago-sendo-acertado-3.mp3");
 loadSound("som_ataque", "frontend/assets/sounds/player-ataque-espada.mp3");
 loadSound("som_morte_jogador", "frontend/assets/sounds/mago-morrendo.mp3");
+
+//LOBO
+loadSound("som_lobo_ataque", "frontend/assets/sounds/lobo-atacando.mp3");
+loadSound("som_lobo_morte", "frontend/assets/sounds/lobo-morrendo.mp3");
 
 // ESQUELETO
 loadSound("som_ataque_esqueleto", "frontend/assets/sounds/ataque-esqueleto.mp3");

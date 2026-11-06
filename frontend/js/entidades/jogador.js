@@ -1,10 +1,22 @@
-export function criarJogador(spawnX, spawnY) {
+// Hitbox "tronco largo, pés estreitos" (coordenadas em px do sprite, centro = posição do jogador).
+// A caixa retangular padrão tem 66px de largura: numa rampa a quina da frente encosta primeiro e o
+// resto do corpo fica no ar. Com os pés estreitos o jogador acompanha a rampa de perto.
+// "escalaAtual" mantém o tamanho no mundo igual nas escalas 0.35 (normal) e 0.4 (ataque).
+function formaHitboxEstreita(escalaAtual) {
+    if (typeof Polygon !== "function") return null; // sem Polygon no Kaboom: usa a caixa padrão
+    const k = 0.35 / escalaAtual;
+    const pts = [[-75, -110], [75, -110], [75, 10], [28, 110], [-28, 110], [-75, 10]];
+    return new Polygon(pts.map(([x, y]) => vec2(x * k, y * k)));
+}
+
+export function criarJogador(spawnX, spawnY, opcoes = {}) {
+    const formaInicial = opcoes.hitboxEstreita ? formaHitboxEstreita(0.35) : null;
     const player = add([
         sprite("player"),
         pos(spawnX, spawnY),
         anchor("center"),
         scale(0.35), // <--- DEFINIDO AQUI: Garante que ele já nasce no tamanho correto!
-        area(),
+        area(formaInicial ? { shape: formaInicial } : {}),
         body(),
         "player",
         {
@@ -109,7 +121,6 @@ export function criarJogador(spawnX, spawnY) {
     });
 
     // SISTEMA DE ATAQUE (Tecla Z ou Z + Baixo)
-    // SISTEMA DE ATAQUE (Tecla Z ou Z + Baixo)
     onKeyPress("z", () => {
         if (player.isAttacking) return;
         
@@ -125,6 +136,7 @@ export function criarJogador(spawnX, spawnY) {
             player.play("ataque_baixo");
 
             player.scale = vec2(0.4); 
+            ajustarHitbox(0.4);
             player.flipX = estaViradoEsquerda;
 
             // HITBOX EXPANDIDA PARA O ATAQUE PARA BAIXO
@@ -146,6 +158,7 @@ export function criarJogador(spawnX, spawnY) {
             player.play("ataque");
 
             player.scale = vec2(0.4); 
+            ajustarHitbox(0.4);
             player.flipX = estaViradoEsquerda;
 
             const larguraAtaque = 70;
@@ -165,12 +178,20 @@ export function criarJogador(spawnX, spawnY) {
     });
 
     // FIM DA ANIMAÇÃO: Limpamos o bloco duplicado! Trata as duas animações perfeitamente.
+    // Troca de escala (ataque) => recalcula a hitbox para o tamanho no mundo não mudar
+    function ajustarHitbox(escalaAtual) {
+        if (!opcoes.hitboxEstreita) return;
+        const forma = formaHitboxEstreita(escalaAtual);
+        if (forma) player.area.shape = forma;
+    }
+
     player.onAnimEnd((anim) => {
         if (anim === "ataque" || anim === "ataque_baixo") {
             player.isAttacking = false;
             player.use(sprite("player")); 
             player.play("idle");
             player.scale = vec2(0.35); 
+            ajustarHitbox(0.35);
             player.flipX = ultimaDirecao; 
         }
     });
