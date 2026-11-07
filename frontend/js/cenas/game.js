@@ -1,18 +1,32 @@
 import { criarJogador } from "../entidades/jogador.js";
-import { criarEsqueleto } from "../entidades/inimigos.js";
-import { criarLich, criarExplosao } from "../entidades/lich.js";
+import { criarEsqueleto } from "../entidades/esqueletos.js";
+import { criarLobo } from "../entidades/lobo.js";
+import { criarSpawnerCorvos } from "../entidades/corvos.js";
+import { criarLich, criarExplosaoVerde, criarExplosaoAzul } from "../entidades/lich.js";
+import { LEVELS, LEVEL_PADRAO } from "../levels.js";
+import { carregarMapa } from "../mapa.js";
+import { BALANCEAMENTO } from "../balanceamento.js";
 
 export async function cenaJogo(data = { lives: 3 }) {
     setGravity(2400);
+
+    // Qual fase carregar (ver levels.js). Sem "level" no data, abre a fase padrão.
+    const idLevel = data.level ?? LEVEL_PADRAO;
+    const level = LEVELS[idLevel];
+    if (!level) throw new Error(`Level "${idLevel}" não existe em levels.js`);
+
+    // --- REINICIA O INVENTÁRIO AO ENTRAR NA FASE/RESSUSCITAR ---
+    sistemaInventario.itens = [];
+    sistemaInventario.indiceSelecionado = 0;
 
     let currentHp = 100;
     const maxHp = 100;
     let currentLives = data.lives; 
     let isPaused = false; 
 
-    // INICIA A MÚSICA DE FUNDO DA FASE 1
-    const musicaFase = play("musica_fase1", {
-        volume: 0.5,   // Ajuste de 0.0 (mudo) a 1.0 (máximo)
+    // INICIA A MÚSICA DE FUNDO DA FASE (definida em levels.js)
+    const musicaFase = play(level.musica, {
+        volume: 0.4,   // Ajuste de 0.0 (mudo) a 1.0 (máximo)
         loop: true     // Mantém a música repetindo em loop contínuo
     });
 
@@ -71,22 +85,35 @@ export async function cenaJogo(data = { lives: 3 }) {
         if (isPaused) {
             player.paused = true;
             
-            // Pausa esqueletos, o chefe Lich e todos os projéteis ativos na tela
+            // Pausa esqueletos, chefe, projéteis, raios E O SOM EM LOOP DO PROJÉTIL
             get("enemy").forEach(e => { e.paused = true; });
             get("boss").forEach(b => { b.paused = true; });
-            get("projetilLich").forEach(p => { p.paused = true; });
+            get("projetilLich").forEach(p => { 
+                p.paused = true; 
+                if (p.somLoop) p.somLoop.paused = true; // Pausa o som da risada do projétil
+            });
+            get("raioLich").forEach(r => { r.paused = true; });
+            get("corvo").forEach(c => { c.paused = true; if (c.visual) c.visual.paused = true; });
+            get("spawnerCorvos").forEach(s => { s.paused = true; });
+            get("bolaDeFogoJogador").forEach(b => { b.paused = true; if (b.visual) b.visual.paused = true; });
+            get("avisoRaio").forEach(a => { a.paused = true; }); 
             
-            // Pausa a música de fundo mantendo o ponto atual
             musicaFase.paused = true; 
         } else {
             player.paused = false;
             
-            // Retoma o movimento de todas as entidades
             get("enemy").forEach(e => { e.paused = false; });
             get("boss").forEach(b => { b.paused = false; });
-            get("projetilLich").forEach(p => { p.paused = false; });
+            get("projetilLich").forEach(p => { 
+                p.paused = false; 
+                if (p.somLoop) p.somLoop.paused = false; // Retoma o som da risada do projétil
+            });
+            get("raioLich").forEach(r => { r.paused = false; });
+            get("corvo").forEach(c => { c.paused = false; if (c.visual) c.visual.paused = false; });
+            get("spawnerCorvos").forEach(s => { s.paused = false; });
+            get("bolaDeFogoJogador").forEach(b => { b.paused = false; if (b.visual) b.visual.paused = false; });
+            get("avisoRaio").forEach(a => { a.paused = false; }); 
             
-            // Retoma a música de fundo de onde parou
             musicaFase.paused = false; 
         }
     }
@@ -102,6 +129,7 @@ export async function cenaJogo(data = { lives: 3 }) {
             go("menu");
         }
     });
+
 
     const response = await fetch("frontend/assets/levels/level-1.tmj");
     const mapJson = await response.json();
@@ -145,55 +173,154 @@ export async function cenaJogo(data = { lives: 3 }) {
         });
     }); 
 
-    const objectLayer = mapJson.layers.find(layer => layer.type === "objectgroup");
-    let spawnPlayerX = 150, spawnPlayerY = 100;
-    
-    // Vamos criar uma lista (array) para guardar as posições de todos os inimigos
-    let inimigosSpawns = [];
-    let spawnLich = null; // Variável para guardar a posição do chefe
+    // Tecla 'A' para circular entre os itens
+    onKeyPress("a", () => {
+        if (isPaused) return;
+        sistemaInventario.avancarSelecao();
+        atualizarHUDInventario();
+    });
 
-    if (objectLayer && objectLayer.objects) {
-        // Pega o spawn do jogador
-        const pObj = objectLayer.objects.find(obj => obj.name === "player-spawn");
-        if (pObj) { spawnPlayerX = pObj.x; spawnPlayerY = pObj.y; }
 
-        // Pega TODOS os objetos que têm o nome "enemy_spawn" no Tiled
-        const eObjs = objectLayer.objects.filter(obj => obj.name === "enemy-spawn");
-        
-        // Se encontrou algum, adiciona na nossa lista de coordenadas
-        if (eObjs.length > 0) {
-            eObjs.forEach(e => {
-                inimigosSpawns.push({ x: e.x, y: e.y });
-            });
+    // Tecla 'S' para usar o item
+    onKeyPress("s", () => {
+        if (isPaused) return;
+
+        const item = sistemaInventario.obterItemAtual();
+        if (!item) return;
+
+        if (item.tipo === "cura") {
+            if (currentHp < maxHp) {
+                currentHp = Math.min(maxHp, currentHp + 40); 
+                hpBar.width = (currentHp / maxHp) * 160; 
+
+                add([
+                    text("+40", { size: 16 }),
+                    pos(player.pos.x, player.pos.y - 40),
+                    color(50, 255, 50),
+                    lifespan(1, { fade: 1 })
+                ]);
+                
+                sistemaInventario.removerItemAtual();
+                atualizarHUDInventario();
+            }
+        } else if (item.tipo === "voo") {
+            // Chama a função de voo passando o tempo (10 segundos)
+            player.ativarVoo(10);
+            
+            // Consome o item e atualiza o HUD
+            sistemaInventario.removerItemAtual();
+            atualizarHUDInventario();
+        } else if (item.tipo === "mana") {
+            // Só gasta a poção se faltar mana; ela recupera TODA a mana
+            if (player.mana < player.manaMax) {
+                player.mana = player.manaMax;
+
+                add([
+                    text("MANA CHEIA!", { size: 16 }),
+                    pos(player.pos.x, player.pos.y - 40),
+                    color(90, 160, 255),
+                    lifespan(1, { fade: 1 })
+                ]);
+
+                sistemaInventario.removerItemAtual();
+                atualizarHUDInventario();
+            }
         } else {
-            // Caso você esqueça de colocar no Tiled, coloca um padrão para não quebrar
-            inimigosSpawns.push({ x: 500, y: 100 });
+            player.gravityScale = 1; // Restaura a gravidade alterando a propriedade
+            add([
+                text("Voo Desativado", { size: 14 }),
+                pos(player.pos.x, player.pos.y - 30),
+                color(200, 200, 200),
+                lifespan(1, { fade: 1 })
+            ]);
         }
+    });
 
-        // ADICIONE ESTE BLOCO PARA CAPTURAR O LICH-SPAWN DO SEU JSON:
-        const lichObj = objectLayer.objects.find(obj => obj.name === "lich-spawn");
-        if (lichObj) {
-        spawnLich = { x: lichObj.x, y: lichObj.y };
+    // CARREGA O MAPA (tiles, colisões e spawns) - o formato depende do "tipo" do level em levels.js
+    const mapa = await carregarMapa(level);
+    const { larguraTotalMapa, alturaTotalMapa } = mapa;
+
+    let spawnPlayerX = mapa.spawnPlayer.x, spawnPlayerY = mapa.spawnPlayer.y;
+    const esqueletosSpawns = mapa.spawnsEsqueletos; // um item para cada "esqueleto-spawn" do Tiled
+    const lobosSpawns = mapa.spawnsLobos;
+    const spawnLich = mapa.spawnLich;           // posição do "lich-spawn" (ou null)
+
+    // FUNDO
+    const fundo = level.fundo;
+    if (fundo) {
+        if (fundo.modo === "tela") {
+            // Fixo na tela: acompanha a câmera, serve para mapas grandes
+            add([ sprite(fundo.sprite), pos(0, 0), scale(fundo.escala ?? 1), fixed(), z(-100) ]);
+        } else {
+            add([ sprite(fundo.sprite), pos(fundo.x ?? 0, fundo.y ?? 0), z(-100), scale(fundo.escala ?? 1) ]);
         }
     }
 
-    add([ sprite("background_fase1"), pos(-200, -300), z(-100), scale(3) ]);
-
-    const larguraTotalMapa = mapWidth * tileW;
-    add([ rect(16, 2000), pos(-16, -500), area(), body({ isStatic: true }), opacity(0) ]);
-    add([ rect(16, 2000), pos(larguraTotalMapa, -500), area(), body({ isStatic: true }), opacity(0) ]);
-    add([ rect(larguraTotalMapa + 400, 100), pos(-200, 1100), area(), body({ isStatic: true }), opacity(0), "deathZone" ]);
+    // LIMITES DO MAPA (paredes laterais e zona de morte), proporcionais ao tamanho do mapa
+    add([ rect(16, alturaTotalMapa + 1040), pos(-16, -500), area(), body({ isStatic: true }), opacity(0) ]);
+    add([ rect(16, alturaTotalMapa + 1040), pos(larguraTotalMapa, -500), area(), body({ isStatic: true }), opacity(0) ]);
+    add([ rect(larguraTotalMapa + 400, 100), pos(-200, alturaTotalMapa + 140), area(), body({ isStatic: true }), opacity(0), "deathZone" ]);
 
     // INSTANCIAÇÃO DAS ENTIDADES MODULARIZADAS
-    const player = criarJogador(spawnPlayerX, spawnPlayerY);
+    const player = criarJogador(spawnPlayerX, spawnPlayerY, { hitboxEstreita: level.hitboxEstreita });
+    // A câmera já começa em cima do jogador (evita "voar" do canto da tela em mapas altos)
+    camPos(
+        Math.max(1280 / 2, Math.min(larguraTotalMapa - 1280 / 2, spawnPlayerX)),
+        Math.max(600 / 2, Math.min(alturaTotalMapa - 600 / 2, spawnPlayerY))
+    );
+    // --- PROTEÇÃO DE SPAWN CONTRA A ZONA DE MORTE ---
+    // Isso evita que, se o mapa demorar 1 milissegundo extra para desenhar o chão, 
+    // o jogador morra instantaneamente.
+    let isSpawning = true;
+    wait(1.5, () => { // 1.5 segundos de imunidade inicial ao abismo
+        isSpawning = false;
+    });
     // Cria um esqueleto para cada ponto "enemy_spawn" criado no Tiled Editor!
-    inimigosSpawns.forEach(spawn => {
+    esqueletosSpawns.forEach(spawn => {
         criarEsqueleto(spawn.x, spawn.y, larguraTotalMapa);
     });
+    lobosSpawns.forEach(spawn => {
+        criarLobo(spawn.x, spawn.y);
+    });
     // ADICIONE ESTE BLOCO PARA CRIAR O LICH SE ELE TIVER SIDO ENCONTRADO NO MAPA:
+    // Corvos: nascem nas folhas de uma árvore e somem nas folhas de outra (zonas "corvo-spawn" e "corvo-fim" do Tiled)
+    if (mapa.zonasCorvo) {
+        criarSpawnerCorvos(mapa.zonasCorvo.spawn, mapa.zonasCorvo.fim);
+    }
     if (spawnLich) {
         criarLich(spawnLich.x, spawnLich.y);
     }
+
+    // === GERAÇÃO DOS ITENS NO MAPA ===
+    // Poção de Vida
+    add([
+        sprite("pocao-vida"), 
+        pos(spawnPlayerX + 80, spawnPlayerY),
+        scale(0.2), // <--- AJUSTE A ESCALA AQUI (ex: 0.3 ou 0.35)
+        area(), 
+        "item_coletavel",
+        { nome: "Poção", tipo: "cura", spriteId: "pocao-vida" } // Adicionamos a referência do id do sprite aqui
+    ]);
+
+    // Asas
+    add([
+        sprite("asas"), 
+        pos(spawnPlayerX + 160, spawnPlayerY), 
+        scale(0.2), // <--- AJUSTE A ESCALA AQUI
+        area(),
+        "item_coletavel",
+        { nome: "Asas", tipo: "voo", spriteId: "asas" } // Adicionamos a referência do id do sprite aqui
+    ]);
+
+    // Poção de Mana (recupera toda a mana; usa com a tecla S, como a poção de vida)
+    add([
+        sprite("pocao-mana"), 
+        pos(spawnPlayerX + 240, spawnPlayerY),
+        scale(0.2),
+        area(),
+        "item_coletavel",
+        { nome: "Poção de Mana", tipo: "mana", spriteId: "pocao-mana" }
+    ]);
 
     // HUD FIXO
     add([ rect(320, 90), pos(15, 15), color(0, 0, 0), opacity(0.6), fixed(), z(100) ]);
@@ -201,9 +328,44 @@ export async function cenaJogo(data = { lives: 3 }) {
     const hpBar = add([ rect(160, 16), pos(27, 27), color(220, 40, 40), fixed(), z(102) ]);
     add([ text(`VIDAS: ${currentLives}`, { size: 18 }), pos(25, 55), color(255, 215, 0), fixed(), z(101) ]);
 
+    // Barra de mana (azul) logo abaixo das vidas + quantas bolas de fogo ainda dá para lançar
+    add([ rect(164, 16), pos(25, 76), color(40, 40, 80), fixed(), z(101) ]);
+    const manaBar = add([ rect(160, 12), pos(27, 78), color(70, 140, 255), fixed(), z(102) ]);
+    const manaTexto = add([ text("", { size: 11 }), pos(192, 77), color(150, 190, 255), fixed(), z(102) ]);
+    let ultimaManaExibida = -1;
+    onUpdate(() => {
+        if (player.mana === ultimaManaExibida) return;
+        ultimaManaExibida = player.mana;
+        manaBar.width = (player.mana / player.manaMax) * 160;
+        manaTexto.text = `MANA ${player.mana}  (x${Math.floor(player.mana / BALANCEAMENTO.mana.custoBolaDeFogo)})`;
+    });
+
     add([ rect(50, 50), pos(240, 25), color(40, 40, 50), outline(2, rgb(200, 200, 200)), fixed(), z(101) ]);
     add([ text("ITEM", { size: 10 }), pos(265, 30), anchor("center"), color(150, 150, 150), fixed(), z(102) ]);
-    add([ text("Vazio", { size: 11 }), pos(265, 53), anchor("center"), color(100, 100, 100), fixed(), z(102) ]);
+
+    // CRIAMOS UM SPRITE PLACEHOLDER INICIALMENTE INVISÍVEL OU VAZIO NA HUD
+    let hudItemSprite = add([
+        sprite("pocao-vida"), // sprite padrão temporário
+        pos(265, 53),
+        anchor("center"),
+        scale(0.2), // Escala menor para caber perfeitamente na caixinha da HUD
+        fixed(),
+        z(102)
+    ]);
+    hudItemSprite.hidden = true;
+
+    atualizarHUDInventario();
+
+    // Função que lê o objeto global e atualiza a tela com o sprite do item
+    function atualizarHUDInventario() {
+        const itemAtual = sistemaInventario.obterItemAtual();
+        if (itemAtual) {
+            hudItemSprite.use(sprite(itemAtual.spriteId)); // Altera para o sprite correto (ex: "pocao-vida" ou "asas")
+            hudItemSprite.hidden = false;                  // Mostra o ícone
+        } else {
+            hudItemSprite.hidden = true;                   // Esconde se estiver vazio
+        }
+    }
 
     // --- HUD DA BARRA DE VIDA DO LICH (Inicialmente Oculta) ---
     const larguraBarraBoss = 400;
@@ -255,41 +417,154 @@ export async function cenaJogo(data = { lives: 3 }) {
     let barraBossAtiva = false; // Controla se o chefe já recebeu o primeiro golpe
 
     function triggerDeath() {
-        // CORREÇÃO: Pausa o som atribuindo true à propriedade paused do objeto de áudio
         if (musicaFase) {
             musicaFase.paused = true;
         }
-        go("death", { lives: currentLives - 1 });
+
+        // --- PARA O SOM DE TODOS OS PROJÉTEIS ATIVOS AO MORRER ---
+        get("projetilLich").forEach(proj => {
+            if (proj.somLoop) {
+                proj.somLoop.paused = true;
+            }
+            destroy(proj); // Opcional: remove os projéteis da tela para limpar o cenário
+        });
+
+        play("som_morte_jogador", { volume: 0.8 });
+
+        go("death", { lives: currentLives - 1, level: idLevel });
     }
 
-    player.onCollide("deathZone", () => triggerDeath());
+    // Função centralizada para aplicar dano, flash e knockback no Jogador
+    function causarDanoJogador(quantidadeDano, posInimigoX) {
+        if (player.isInvulnerable) return; // Evita dano múltiplo no mesmo segundo
 
-    // NOVO: Quando o ataque do inimigo encosta no jogador (dano extra da espada do esqueleto)
-    player.onCollide("ataqueInimigo", () => {
-        currentHp = Math.max(0, currentHp - 40); // Tira 40 de HP no ataque
+        // --- SISTEMA DE VOZES ALTERNADAS AO TOMAR HIT ---
+        const faixasVoz = ["voz_hit_1", "voz_hit_2", "voz_hit_3"];
+        // Escolhe aleatoriamente uma das 3 faixas para não ficar repetitivo
+        const somEscolhido = faixasVoz[Math.floor(Math.random() * faixasVoz.length)];
+        play(somEscolhido, { volume: 0.7 });
+
+        currentHp = Math.max(0, currentHp - quantidadeDano);
         hpBar.width = (currentHp / maxHp) * 160;
-        if (currentHp <= 0) triggerDeath();
+        
+        if (currentHp <= 0) {
+            triggerDeath();
+            return;
+        }
+
+        // --- 1. EFEITO VISUAL DE FLASH (PISCAR) ---
+        player.isInvulnerable = true;
+        let piscadas = 0;
+        const intervaloFlash = loop(0.1, () => {
+            player.opacity = player.opacity === 1 ? 0.3 : 1;
+            piscadas++;
+            if (piscadas >= 6) { // Pisca 3 vezes (total 0.6s de imunidade visual)
+                player.opacity = 1;
+                player.isInvulnerable = false;
+                intervaloFlash.cancel();
+            }
+        });
+
+        // --- 2. CONGELAR INPUTS BREVEMENTE E APLICAR KNOCKBACK SEGURO ---
+        player.isKnockbacked = true; 
+        
+        // Descobre o lado do perigo e aplica um tranco instantâneo na posição de forma segura
+        const direcaoPerigo = (player.pos.x > posInimigoX) ? 1 : -1;
+        player.pos.x += direcaoPerigo * 60; // Empurra 30 pixels para trás instantaneamente
+        player.pos.y -= 15;                // Dá um pequeno salto para cima
+
+        // Libera os inputs do jogador após 0.15 segundos
+        wait(0.15, () => {
+            player.isKnockbacked = false;
+        });
+    }
+
+    player.onCollide("deathZone", () => {
+        if (!isSpawning) { // Só morre se a proteção inicial tiver acabado
+            triggerDeath();
+        } else {
+            // Se cair no buraco durante o spawn, teletransporta de volta para o ponto seguro
+            player.pos.x = spawnPlayerX;
+            player.pos.y = spawnPlayerY;
+        }
     });
 
-    // NOVO: Quando o ataque do jogador encosta no esqueleto (Transforma em pilha de ossos!)
-    onCollide("ataqueJogador", "enemy", (ataque, enemy) => {
-        // Se ele já for uma pilha de ossos (morto), ignora o ataque!
-        if (enemy.isDead) return; 
+    player.onCollide("item_coletavel", (item) => {
+        const pegou = sistemaInventario.adicionarItem(item.nome, item.tipo, item.spriteId);
+        if (pegou) {
+            destroy(item);
+            atualizarHUDInventario(); 
+        }
+    }); 
 
+    // Corvo: ao encostar no jogador explode e causa dano. Se o jogador estiver piscando (invulnerável
+    // depois de um golpe), o corvo atravessa sem explodir. Espada e bola de fogo não o afetam.
+    // onCollideUpdate (e não onCollide) porque o corvo pode já estar encostado quando o jogador deixa de piscar.
+    player.onCollideUpdate("corvo", (corvo) => {
+        if (!corvo.ativo || player.isInvulnerable) return;
+        causarDanoJogador(BALANCEAMENTO.dano.corvo, corvo.pos.x);
+        corvo.explodir();
+    });
+
+    player.onCollide("ataqueInimigo", (enemy) => {
+      causarDanoJogador(40, enemy.pos.x);
+    });
+
+    // === DANO NOS ESQUELETOS ===
+    // Esqueletos têm vida (BALANCEAMENTO.vida.esqueleto): a espada (5) derruba em 1 golpe e a bola de fogo (3) em 2.
+    // Quando a vida chega a zero ele vira uma pilha de ossos e renasce depois de 10s (com a vida cheia).
+    // offsetAreaCaido: ajuste de altura da área da pilha de ossos (2 no ataque lateral, 10 no ataque para baixo).
+    function danificarEsqueleto(enemy, dano, dirEmpurrao, offsetAreaCaido) {
+        if (enemy.isDead) return;
+
+        enemy.hp -= dano;
+
+        if (enemy.hp > 0) {
+            // Sobreviveu: pisca, leva um empurrãozinho e mostra o dano
+            play("som_quebrar", { volume: 0.3 });
+            enemy.pos.x += dirEmpurrao * 8;
+
+            if (enemy.flashCtrl) enemy.flashCtrl.cancel();
+            let piscadas = 0;
+            enemy.flashCtrl = loop(0.1, () => {
+                enemy.opacity = enemy.opacity === 1 ? 0.3 : 1;
+                piscadas++;
+                if (piscadas >= 4) {
+                    enemy.opacity = 1;
+                    enemy.flashCtrl.cancel();
+                }
+            });
+
+            add([
+                text(`-${dano}`, { size: 14 }),
+                pos(enemy.pos.x, enemy.pos.y - 40),
+                color(255, 255, 0),
+                lifespan(0.4, { fade: 0.4 })
+            ]);
+            return;
+        }
+
+        // Vida zerada: vira pilha de ossos
+        play("som_quebrar", { volume: 0.7 });
         enemy.isDead = true; 
-        
-        // NÃO vamos mais remover a tag "enemy" (assim o togglePause consegue achar e pausar os ossos!)
+        if (enemy.flashCtrl) enemy.flashCtrl.cancel();
+        enemy.opacity = 1;
+
+        // Empurra o esqueleto para trás instantaneamente de forma segura
+        enemy.pos.x += dirEmpurrao * 25; // Joga 25 pixels para trás
+        enemy.pos.y -= 10;               // Dá um pequeno tranco para cima
         
         enemy.use(sprite("esqueleto_caido")); 
 
-        // AJUSTE DE FLUTUAÇÃO: Trocamos o offset Y de 20 para 10 (ou 5). 
-        // Isso sobe a caixa de colisão física, forçando a imagem do osso a descer e colar no chão!
+        // AJUSTE A ESCALA DA PILHA DE OSSOS AQUI:
+        enemy.use(scale(0.08)); // Mude este valor para deixar maior ou menor (ex: 0.35, 0.45)
+
         enemy.use(area({ 
             width: 45, 
             height: 20, 
-            offset: vec2(0, 2), 
+            offset: vec2(0, offsetAreaCaido), 
             collisionIgnore: ["player", "enemy"] 
-        })); 
+        }));
         
         add([
             text("CRACK!", { size: 12 }),
@@ -310,10 +585,14 @@ export async function cenaJogo(data = { lives: 3 }) {
                 if (enemy.exists()) {
                     enemy.isDead = false; 
                     enemy.isAttacking = false;
+                    enemy.hp = enemy.maxHp; // renasce com a vida cheia
                     
                     enemy.use(sprite("esqueleto")); 
                     enemy.play("walk");
                     
+                    // RESTAURA O TAMANHO NORMAL AO REVIVER:
+                    enemy.use(scale(0.4));
+
                     enemy.use(area({ 
                         width: 30, 
                         height: 50, 
@@ -332,80 +611,142 @@ export async function cenaJogo(data = { lives: 3 }) {
                 controleRespawn.cancel();
             }
         });
-    });
+    }
 
-    // Quando o ataque para baixo do jogador encosta no esqueleto
-    onCollide("ataqueBaixoJogador", "enemy", (ataque, enemy) => {
-        if (enemy.isDead) return; 
+    function danificarLobo(lobo, dano, dirEmpurrao) {
+        if (lobo.isDead) return;
 
-        enemy.isDead = true; 
-        enemy.use(sprite("esqueleto_caido")); 
-        enemy.use(area({ 
-            width: 45, 
-            height: 20, 
-            offset: vec2(0, 10), 
-            collisionIgnore: ["player", "enemy"] 
-        })); 
-        
+        lobo.hp -= dano;
+
+        if (lobo.hp > 0) {
+            // Sobreviveu ao golpe: recuo leve e efeito de piscar
+            lobo.pos.x += dirEmpurrao * 8;
+
+            if (lobo.flashCtrl) lobo.flashCtrl.cancel();
+            let piscadas = 0;
+            lobo.flashCtrl = loop(0.1, () => {
+                lobo.opacity = lobo.opacity === 1 ? 0.3 : 1;
+                piscadas++;
+                if (piscadas >= 4) {
+                    lobo.opacity = 1;
+                    lobo.flashCtrl.cancel();
+                }
+            });
+
+            add([
+                text(`-${dano}`, { size: 14 }),
+                pos(lobo.pos.x, lobo.pos.y - 40),
+                color(255, 255, 0),
+                lifespan(0.4, { fade: 0.4 })
+            ]);
+            return;
+        }
+
+        // A vida chegou a zero: empurra para trás e aciona a morte
+        lobo.pos.x += dirEmpurrao * 15; 
         add([
-            text("CRACK!", { size: 12 }),
-            pos(enemy.pos.x, enemy.pos.y - 20),
-            color(200, 200, 200),
+            text(`-${dano}`, { size: 14 }),
+            pos(lobo.pos.x, lobo.pos.y - 40),
+            color(255, 50, 50),
             lifespan(0.5, { fade: 0.5 })
         ]);
-
-        // Temporizador de respawn (mesma lógica dos 10 segundos)
-        enemy.tempoRespawn = 10;
-        const controleRespawn = enemy.onUpdate(() => {
-            enemy.tempoRespawn -= dt();
-            if (enemy.tempoRespawn <= 0) {
-                if (enemy.exists()) {
-                    enemy.isDead = false; 
-                    enemy.isAttacking = false;
-                    enemy.use(sprite("esqueleto")); 
-                    enemy.play("walk");
-                    enemy.use(area({ 
-                        width: 30, 
-                        height: 50, 
-                        offset: vec2(0, 5),
-                        collisionIgnore: [] 
-                    })); 
-                    
-                    add([
-                        text("REVIVEU!", { size: 10 }),
-                        pos(enemy.pos.x, enemy.pos.y - 30),
-                        color(200, 50, 50),
-                        lifespan(0.5, { fade: 0.5 })
-                    ]);
-                }
-                controleRespawn.cancel();
-            }
-        });
-    });
+    
+        // Isso dispara o evento lobo.on("death") criado no lobos.js
+        lobo.trigger("death"); 
+    }
 
     player.onCollide("projetilLich", (proj) => {
-        // Cria a explosão na posição atual do projétil antes de destruí-lo
-        criarExplosao(proj.pos);
-
-        destroy(proj);
-        currentHp = Math.max(0, currentHp - 30);
-        hpBar.width = (currentHp / maxHp) * 160;
-        if (currentHp <= 0) triggerDeath();
+      causarDanoJogador(30, proj.pos.x);
+      
+      // Chama a função de destruição com som de explosão e parada da risada
+      if (proj.destruirComExplosao) {
+          proj.destruirComExplosao();
+      } else {
+          criarExplosaoVerde(proj.pos);
+          destroy(proj);
+      }
     });
 
-    // Dano do Ataque Lateral do Jogador no Lich
-    onCollide("ataqueJogador", "boss", (ataque, boss) => {
-        processarDanoBoss(boss);
+    player.onCollide("raioLich", (raio) => {
+      causarDanoJogador(80, raio.pos.x);
     });
 
-    // Dano do Ataque Para Baixo do Jogador no Lich
-    onCollide("ataqueBaixoJogador", "boss", (ataque, boss) => {
-        processarDanoBoss(boss);
+    // Ataque lateral da espada
+    onCollide("ataqueJogador", "enemy", (ataque, enemy) => {
+        if (enemy.isDead) return; 
+        const dirEmpurrao = (enemy.pos.x > player.pos.x) ? 1 : -1;
+        
+        if (enemy.isLobo) {
+            danificarLobo(enemy, BALANCEAMENTO.dano.espada, dirEmpurrao);
+        } else {
+            danificarEsqueleto(enemy, BALANCEAMENTO.dano.espada, dirEmpurrao, 2);
+        }
+        destroy(ataque);
     });
 
-    // Função central para aplicar o dano de 5 HP por golpe
-    function processarDanoBoss(boss) {
+    // Ataque para baixo da espada
+    onCollide("ataqueBaixoJogador", "enemy", (ataque, enemy) => {
+        if (enemy.isDead) return;
+        const dirEmpurrao = (enemy.pos.x > player.pos.x) ? 1 : -1;
+        
+        if (enemy.isLobo) {
+            danificarLobo(enemy, BALANCEAMENTO.dano.espada, dirEmpurrao);
+        } else {
+            danificarEsqueleto(enemy, BALANCEAMENTO.dano.espada, dirEmpurrao, 10);
+        }
+        destroy(ataque);
+    });
+
+    // Bola de fogo
+    onCollide("bolaDeFogoJogador", "enemy", (bola, enemy) => {
+        if (bola.acabou || enemy.isDead) return;
+        
+        if (enemy.isLobo) {
+            danificarLobo(enemy, bola.dano, bola.dir);
+        } else {
+            danificarEsqueleto(enemy, bola.dano, bola.dir, 2);
+        }
+        bola.explodir();
+    });
+
+    // Bola de fogo vs Corvo
+    onCollide("bolaDeFogoJogador", "corvo", (bola, corvo) => {
+        // Ignora se a bola já explodiu, se o corvo ainda está invisível nas folhas ou se já está morrendo
+        if (bola.acabou || !corvo.ativo || corvo.explodindo) return;
+        
+        bola.explodir();   // A bola de fogo some com um clarão
+        corvo.explodir();  // O corvo morre instantaneamente (1 hit)
+        
+        // Opcional: Feedback visual do acerto
+        add([
+            text("HIT!", { size: 12 }),
+            pos(corvo.pos.x, corvo.pos.y - 20),
+            color(255, 150, 50),
+            lifespan(0.4, { fade: 0.4 })
+        ]);
+    });
+
+    // Função central de dano no Lich. Espada: 5 HP e empurra 30px; bola de fogo: 3 HP e empurra 15px.
+    function processarDanoBoss(boss, dano = BALANCEAMENTO.dano.espada, empurrao = 30, direcao = (boss.pos.x > player.pos.x) ? 1 : -1) {
         if (boss.isDead) return;
+
+        play("dano_lich", { volume: 0.9 });
+
+        // --- EFEITO VISUAL DE PISCAR DO LICH ---
+        let piscadas = 0;
+        const intervaloFlash = loop(0.1, () => {
+            boss.opacity = boss.opacity === 1 ? 0.3 : 1;
+            piscadas++;
+            if (piscadas >= 4) { // Pisca 2 vezes rapidamente
+                boss.opacity = 1;
+                intervaloFlash.cancel();
+            }
+        });
+
+        // --- KNOCKBACK DO LICH ---
+        // Descobre a direção do impacto em relação ao jogador e empurra o chefe para trás
+        boss.pos.x += direcao * empurrao;       // Joga o chefe para trás
+        boss.pos.y -= 10;                      // Dá um pequeno tranco para cima
 
         // Se for o primeiro golpe, revela a barra de vida no topo da tela!
         if (!barraBossAtiva) {
@@ -416,14 +757,14 @@ export async function cenaJogo(data = { lives: 3 }) {
             bossText.hidden = false;
         }
 
-        boss.hp = Math.max(0, boss.hp - 5); // Tira 5 de vida por golpe
+        boss.hp = Math.max(0, boss.hp - dano); // Tira a vida conforme o ataque
         
         // Atualiza a largura visual da barra vermelha proporcionalmente
         bossHpBar.width = (boss.hp / boss.maxHp) * larguraBarraBoss;
 
         // Efeitinho de texto de dano
         add([
-            text("-5", { size: 14 }),
+            text(`-${dano}`, { size: 14 }),
             pos(boss.pos.x, boss.pos.y - 40),
             color(255, 255, 0),
             lifespan(0.4, { fade: 0.4 })
@@ -432,7 +773,10 @@ export async function cenaJogo(data = { lives: 3 }) {
         // Se a vida chegar a zero (6º golpe), o Lich morre!
         if (boss.hp <= 0) {
             boss.isDead = true;
-            criarExplosao(boss.pos);
+
+            play("morte_lich", { volume: 0.9 });
+
+            criarExplosaoAzul(boss.pos);
             destroy(boss);
 
             // Esconde a barra de vida após derrotá-lo
@@ -453,6 +797,33 @@ export async function cenaJogo(data = { lives: 3 }) {
         }
     }
 
+    // Quando o jogador colide com o esqueleto por baixo
+    player.onCollide("enemy", (enemy) => {
+        if (enemy.isDead) return;
+
+        // Se o jogador estiver subindo (pulando) e a posição Y do jogador for inferior à do esqueleto
+        if (player.pos.y > enemy.pos.y && player.isGrounded() === false) {
+            // Joga o esqueleto fortemente para cima
+            enemy.pos.y -= 40; 
+            
+            // Se o esqueleto usa física de pulo/gravidade, podemos dar um impulso negativo de velocidade se ele tiver body()
+            if (enemy.jump) {
+                enemy.jump(600);
+            }
+        }
+    });
+
+    // Quando o jogador colide com o chefe Lich por baixo
+    player.onCollide("boss", (boss) => {
+        if (boss.isDead) return;
+
+        // Verifica se o jogador está abaixo do Lich e subindo
+        if (player.pos.y > boss.pos.y) {
+            // Joga o Lich instantaneamente para cima
+            boss.pos.y -= 50; 
+        }
+    });
+
     // ATUALIZAÇÃO DA CÂMERA (Travada nos eixos X e Y)
     player.onUpdate(() => {
         const targetPos = player.pos;
@@ -463,8 +834,7 @@ export async function cenaJogo(data = { lives: 3 }) {
         // Limites horizontais (já funcionavam)
         newX = Math.max(1280 / 2, Math.min(larguraTotalMapa - (1280 / 2), newX));
 
-        // NOVOS: Limites verticais baseados na altura do mapa (20 tiles * 48 pixels = 960 pixels de altura total)
-        const alturaTotalMapa = mapJson.height * tileH; 
+        // Limites verticais baseados na altura do mapa (alturaTotalMapa vem do carregarMapa)
         newY = Math.max(600 / 2, Math.min(alturaTotalMapa - (600 / 2), newY));
 
         camPos(Math.round(newX), Math.round(newY));
