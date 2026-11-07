@@ -190,6 +190,9 @@ function lerObjetos(json, level, escala) {
     const spawnsEsqueletos = [];
     const spawnsLobos = [];
     let spawnLich = null;
+    let zonaCorvoSpawn = null; // retângulo (folhas da árvore onde os corvos nascem)
+    let zonaCorvoFim = null;   // retângulo (folhas da árvore onde os corvos somem)
+    const retangulo = (obj) => ({ x: obj.x * escala, y: obj.y * escala, w: obj.width * escala, h: obj.height * escala });
 
     json.layers
         .filter(l => l.type === "objectgroup")
@@ -200,6 +203,8 @@ function lerObjetos(json, level, escala) {
                 else if (obj.name === "esqueleto-spawn") spawnsEsqueletos.push(p);
                 else if (obj.name === "lobo-spawn") spawnsLobos.push(p);
                 else if (obj.name === "lich-spawn") spawnLich = p;
+                else if (obj.name === "corvo-spawn") zonaCorvoSpawn = retangulo(obj);
+                else if (obj.name === "corvo-fim") zonaCorvoFim = retangulo(obj);
             });
         });
 
@@ -208,7 +213,13 @@ function lerObjetos(json, level, escala) {
         spawnsEsqueletos.push({ ...level.esqueletoPadrao });
     }
 
-    return { spawnPlayer, spawnsLobos, spawnsEsqueletos, spawnLich };
+    // Corvos só existem se o mapa tiver as DUAS zonas (retângulos no Tiled): "corvo-spawn" e "corvo-fim"
+    if (!!zonaCorvoSpawn !== !!zonaCorvoFim) {
+        console.warn(`[${level.id}] falta a zona "${zonaCorvoSpawn ? "corvo-fim" : "corvo-spawn"}": os corvos não vão aparecer.`);
+    }
+    const zonasCorvo = (zonaCorvoSpawn && zonaCorvoFim) ? { spawn: zonaCorvoSpawn, fim: zonaCorvoFim } : null;
+
+    return { spawnPlayer, spawnsLobos, spawnsEsqueletos, spawnLich, zonasCorvo };
 }
 
 // ---------------------------------------------------------------------------

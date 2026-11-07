@@ -1,3 +1,5 @@
+import { BALANCEAMENTO } from "../balanceamento.js";
+
 export function criarEsqueleto(spawnX, spawnY, larguraTotalMapa) {
     const enemy = add([
         sprite("esqueleto", { anim: "walk" }),
@@ -6,12 +8,15 @@ export function criarEsqueleto(spawnX, spawnY, larguraTotalMapa) {
         body(),
         scale(0.4),
         anchor("center"),
+        opacity(1), // permite piscar quando leva um golpe e sobrevive
         "enemy",
         { 
             dir: 1, 
             speed: 70, 
             isAttacking: false,
-            isDead: false // NOVO: Flag para controlar se está vivo ou em pilha de ossos
+            isDead: false, // NOVO: Flag para controlar se está vivo ou em pilha de ossos
+            hp: BALANCEAMENTO.vida.esqueleto,    // a espada tira 5 e a bola de fogo 3 (ver balanceamento.js)
+            maxHp: BALANCEAMENTO.vida.esqueleto
         }
     ]);
 

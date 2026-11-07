@@ -1,7 +1,10 @@
+import { BALANCEAMENTO } from "../balanceamento.js";
+import { criarBolaDeFogo } from "./bolasDeFogo.js";
+
 // Hitbox "tronco largo, pés estreitos" (coordenadas em px do sprite, centro = posição do jogador).
 // A caixa retangular padrão tem 66px de largura: numa rampa a quina da frente encosta primeiro e o
 // resto do corpo fica no ar. Com os pés estreitos o jogador acompanha a rampa de perto.
-// "escalaAtual" mantém o tamanho no mundo igual nas escalas 0.35 (normal) e 0.4 (ataque).
+// "escalaAtual" mantém o tamanho no mundo igual nas escalas 0.35 (normal), 0.4 (espada) e 0.44 (conjurar).
 function formaHitboxEstreita(escalaAtual) {
     if (typeof Polygon !== "function") return null; // sem Polygon no Kaboom: usa a caixa padrão
     const k = 0.35 / escalaAtual;
@@ -24,11 +27,37 @@ export function criarJogador(spawnX, spawnY, opcoes = {}) {
             isKnockbacked: false,
             isFlying: false,
             tempoVoo: 0,
+
+            // Mana: cada bola de fogo gasta BALANCEAMENTO.mana.custoBolaDeFogo (ver balanceamento.js)
+            mana: BALANCEAMENTO.mana.maxima,
+            manaMax: BALANCEAMENTO.mana.maxima,
+            conjurando: false,
+            bolaLancada: false,
             
             ativarVoo(segundos) {
                 this.isFlying = true;
                 this.tempoVoo = segundos;
-                this.use(body({ gravityScale: 0 }));
+                
+                // --- O GRANDE TRUQUE ---
+                // Como não podemos acessar 'this.vel', enganamos o motor de física 
+                // forçando-o a sobrescrever o pulo original de -1100 com um pulo de força microscópica.
+                // Usamos 0.01 em vez de 0 absoluto para evitar que a engine ignore valores nulos.
+                this.jump(0.01); 
+
+                // Agora sim, desliga a gravidade com a inércia estabilizada
+                this.gravityScale = 0; 
+                
+                const estavaVirado = this.flipX; 
+                this.use(sprite("player_voando")); 
+                this.play("voar");
+                this.scale = vec2(0.44); 
+                
+                ajustarHitbox(0.44);
+                
+                // Descola 2 pixels do chão/rampa fisicamente
+                this.pos.y -= 2;
+
+                this.flipX = estavaVirado; 
                 
                 add([
                     text("Voo Ativado! (10s)", { size: 14 }),
@@ -47,7 +76,19 @@ export function criarJogador(spawnX, spawnY, opcoes = {}) {
             
             if (player.tempoVoo <= 0) {
                 player.isFlying = false;
-                player.use(body({ gravityScale: 1 })); // Religa a gravidade
+
+                // Religa a gravidade sem quebrar a física
+                player.gravityScale = 1;
+                
+                // --- CORREÇÃO AQUI: Só força a troca de sprite se NÃO estiver atacando ---
+                if (!player.isAttacking) {
+                    const estavaVirado = player.flipX;
+                    player.use(sprite("player")); 
+                    player.play("idle");
+                    player.scale = vec2(0.35); // Retorna à escala original
+                    ajustarHitbox(0.35);       // Recalcula a caixa de colisão
+                    player.flipX = estavaVirado;
+                }
                 
                 add([
                     text("Voo Esgotado!", { size: 14 }),
@@ -56,6 +97,17 @@ export function criarJogador(spawnX, spawnY, opcoes = {}) {
                     lifespan(1, { fade: 1 })
                 ]);
             }
+        }
+    });
+
+    // A bola de fogo sai da ponta do cajado quando a animação chega ao quadro do disparo
+    const QUADRO_DISPARO = 3;
+    const PONTA_CAJADO = { x: 57, y: -10 }; // px no mundo, a partir do centro do jogador (medido na arte)
+    player.onUpdate(() => {
+        if (player.conjurando && !player.bolaLancada && player.frame >= QUADRO_DISPARO) {
+            player.bolaLancada = true;
+            const dir = direcaoAoAtacar ? -1 : 1;
+            criarBolaDeFogo(player.pos.x + dir * PONTA_CAJADO.x, player.pos.y + PONTA_CAJADO.y, dir);
         }
     });
 
@@ -69,8 +121,8 @@ export function criarJogador(spawnX, spawnY, opcoes = {}) {
         player.move(-vel, 0);
         player.flipX = true;
         
-        // CORREÇÃO: Dispara a animação de andar se estiver no chão
-        if (player.isGrounded() && player.curAnim() !== "walk" && !player.isAttacking) {
+        // CORREÇÃO: Dispara a animação de andar se estiver no chão E NÃO ESTIVER VOANDO
+        if (player.isGrounded() && !player.isFlying && player.curAnim() !== "walk" && !player.isAttacking) {
             player.play("walk");
         }
     });
@@ -81,8 +133,8 @@ export function criarJogador(spawnX, spawnY, opcoes = {}) {
         player.move(vel, 0);
         player.flipX = false;
         
-        // CORREÇÃO: Dispara a animação de andar se estiver no chão
-        if (player.isGrounded() && player.curAnim() !== "walk" && !player.isAttacking) {
+        // CORREÇÃO: Dispara a animação de andar se estiver no chão E NÃO ESTIVER VOANDO
+        if (player.isGrounded() && !player.isFlying && player.curAnim() !== "walk" && !player.isAttacking) {
             player.play("walk");
         }
     });
@@ -106,15 +158,17 @@ export function criarJogador(spawnX, spawnY, opcoes = {}) {
     });
 
     onKeyRelease("left", () => {
-        if (!isKeyDown("right") && !player.isAttacking) player.play("idle");
+        if (!isKeyDown("right") && !player.isAttacking && !player.isFlying) player.play("idle");
     });
 
     onKeyRelease("right", () => {
-        if (!isKeyDown("left") && !player.isAttacking) player.play("idle");
+        if (!isKeyDown("left") && !player.isAttacking && !player.isFlying) player.play("idle");
     });
 
     onKeyPress("up", () => {
-        if (player.isGrounded() && !player.isAttacking) {
+        // CORREÇÃO: Adicionamos o "!player.isFlying" para impedir que
+        // o jogador dispare a força de pulo da física enquanto usa as asas
+        if (player.isGrounded() && !player.isAttacking && !player.isFlying) {
             player.jump(JUMP_FORCE);
             player.play("idle");
         }
@@ -122,12 +176,13 @@ export function criarJogador(spawnX, spawnY, opcoes = {}) {
 
     // SISTEMA DE ATAQUE (Tecla Z ou Z + Baixo)
     onKeyPress("z", () => {
-        if (player.isAttacking) return;
+        if (player.paused || player.isAttacking) return;
         
         play("som_ataque", { volume: 0.6 });   
 
         const querAtacarParaBaixo = isKeyDown("down");
         const estaViradoEsquerda = player.flipX;
+        direcaoAoAtacar = estaViradoEsquerda; // para voltar virado pro mesmo lado quando o ataque acabar
         player.isAttacking = true;
 
         if (querAtacarParaBaixo) {
@@ -150,7 +205,9 @@ export function criarJogador(spawnX, spawnY, opcoes = {}) {
                 "ataqueBaixoJogador" 
             ]);
 
+            if (!player.isFlying){
             player.jump(500);
+            }
 
         } else {
             // ATAQUE NORMAL (Lateral)
@@ -177,25 +234,78 @@ export function criarJogador(spawnX, spawnY, opcoes = {}) {
         }
     });
 
-    // FIM DA ANIMAÇÃO: Limpamos o bloco duplicado! Trata as duas animações perfeitamente.
-    // Troca de escala (ataque) => recalcula a hitbox para o tamanho no mundo não mudar
-    function ajustarHitbox(escalaAtual) {
-        if (!opcoes.hitboxEstreita) return;
-        const forma = formaHitboxEstreita(escalaAtual);
-        if (forma) player.area.shape = forma;
+    // BOLA DE FOGO (Tecla X): gasta mana, toca a animação de conjurar e a bola sai no quadro do disparo
+    const ESCALA_CONJURAR = 0.44; // a arte do cajado tem 175px de altura (a de andar tem 220)
+    let avisoManaEm = -10;
+    onKeyPress("x", () => {
+        if (player.paused || player.isKnockbacked || player.isAttacking) return;
+
+        const custo = BALANCEAMENTO.mana.custoBolaDeFogo;
+        if (player.mana < custo) {
+            // sem mana: avisa (no máximo 1 aviso a cada 0.6s para não encher a tela)
+            if (time() - avisoManaEm > 0.6) {
+                avisoManaEm = time();
+                add([
+                    text("Sem mana!", { size: 14 }),
+                    pos(player.pos.x, player.pos.y - 50),
+                    color(120, 170, 255),
+                    lifespan(0.8, { fade: 0.8 })
+                ]);
+            }
+            return;
+        }
+        player.mana -= custo;
+
+        play("som_bola_de_fogo", { volume: 0.6 });
+
+        const estaViradoEsquerda = player.flipX;
+        direcaoAoAtacar = estaViradoEsquerda;
+        player.isAttacking = true;
+        player.conjurando = true;
+        player.bolaLancada = false;
+
+        player.use(sprite("player_conjurar"));
+        player.play("conjurar");
+        player.scale = vec2(ESCALA_CONJURAR);
+        ajustarHitbox(ESCALA_CONJURAR, true); // a arte é larga (o fogo sai do corpo): força a hitbox estreita
+        player.flipX = estaViradoEsquerda;
+    });
+
+    // Troca de escala (ataque) => recalcula a hitbox para o tamanho no mundo não mudar.
+    // forcarEstreita: usa a hitbox estreita mesmo em levels que não a ligaram (frames largos, como o de conjurar).
+    function ajustarHitbox(escalaAtual, forcarEstreita = false) {
+        if (opcoes.hitboxEstreita || forcarEstreita) {
+            const forma = formaHitboxEstreita(escalaAtual);
+            if (forma) { player.area.shape = forma; return; }
+        }
+        if (!opcoes.hitboxEstreita) player.area.shape = null; // volta para a caixa padrão do sprite
     }
 
     player.onAnimEnd((anim) => {
-        if (anim === "ataque" || anim === "ataque_baixo") {
+        if (anim === "ataque" || anim === "ataque_baixo" || anim === "conjurar") {
             player.isAttacking = false;
-            player.use(sprite("player")); 
-            player.play("idle");
-            player.scale = vec2(0.35); 
-            ajustarHitbox(0.35);
-            player.flipX = ultimaDirecao; 
+            player.conjurando = false;
+            
+            // Verifica se o jogador deveria continuar voando
+            if (player.isFlying) {
+                player.use(sprite("player_voando")); 
+                player.play("voar");
+                player.scale = vec2(0.44); 
+                
+                // --- CORREÇÃO AQUI TAMBÉM ---
+                ajustarHitbox(0.44);
+                
+            } else {
+                player.use(sprite("player")); 
+                player.play("idle");
+                player.scale = vec2(0.35); 
+                ajustarHitbox(0.35);
+            }
+            
+            player.flipX = direcaoAoAtacar; 
         }
     });
 
-    let ultimaDirecao = false;
+    let direcaoAoAtacar = false; // lado para onde o jogador estava virado ao começar o ataque
     return player;
 }

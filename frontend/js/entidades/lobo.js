@@ -1,3 +1,5 @@
+import { BALANCEAMENTO } from "../balanceamento.js";
+
 // frontend/entidades/lobos.js
 export function criarLobo(spawnX, spawnY) {
     const lobo = add([
@@ -13,7 +15,9 @@ export function criarLobo(spawnX, spawnY) {
             speed: 170, 
             isAttacking: false,
             isDead: false,
-            isLobo: true 
+            isLobo: true,
+            hp: BALANCEAMENTO.vida.lobo,
+            maxHp: BALANCEAMENTO.vida.lobo
         }
     ]);
 
@@ -30,8 +34,9 @@ export function criarLobo(spawnX, spawnY) {
         lobo.use(sprite("lobo_morrendo"));
         
         // 2. Garante que a escala e o espelhamento voltem ao normal 
-        // (importante caso ele seja morto enquanto estiver inflado no salto de ataque)
-        lobo.use(scale(0.5));
+        // --- AUMENTE A ESCALA AQUI (Exemplo: 0.75) ---
+        lobo.use(scale(0.75)); 
+        
         lobo.flipX = lobo.dir < 0;
         
         // 3. Remove a tag "enemy" da física e ignora o jogador para o corpo não atrapalhar a movimentação

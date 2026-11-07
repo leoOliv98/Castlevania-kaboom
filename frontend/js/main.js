@@ -24,6 +24,45 @@ loadSprite("player", "frontend/assets/sprites/Personagem-Principal-andando.png",
     }
 }); 
 
+loadSprite("player_ataque", "frontend/assets/sprites/Personagem-Principal-atacando.png", {
+    sliceX: 5, // MUDE AQUI: Coloque o número exato de quadros da animação de ataque
+    sliceY: 1,
+    anims: { "ataque": { from: 0, to: 4, speed: 15, loop: false } }
+});
+
+loadSprite("player_ataque_baixo", "frontend/assets/sprites/ataque-pulo-para-baixo.png", {
+    sliceX: 4, // A imagem tem exatamente 4 quadros lado a lado
+    sliceY: 1,
+    anims: { 
+        "ataque_baixo": { from: 0, to: 3, speed: 12, loop: false } 
+    }
+});
+
+loadSprite("player_voando", "frontend/assets/sprites/mago-voando.png", {
+    sliceX: 7,  // A imagem anexada possui 8 quadros de animação horizontalmente
+    sliceY: 1,
+    anims: {
+        voar: { from: 0, to: 6, loop: true, speed: 12 }, 
+    },
+});
+
+loadSprite("esqueleto", "frontend/assets/sprites/Esqueleto-andando.png", {
+    sliceX: 8, 
+    sliceY: 1,
+    anims: {
+        "idle": { from: 0, to: 0 },
+        "walk": { from: 0, to: 7, speed: 8, loop: true }
+    }
+});
+
+loadSprite("esqueleto_ataque", "frontend/assets/sprites/Esqueleto-atacando.png", {
+    sliceX: 5, // MUDE AQUI: Coloque o número exato de quadros do esqueleto atacando
+    sliceY: 1,
+    anims: { "ataque": { from: 0, to: 4, speed: 10, loop: false } }
+});
+
+loadSprite("esqueleto_caido", "frontend/assets/sprites/esqueleto-caido.png");
+
 loadSprite("lobo_correndo", "frontend/assets/sprites/lobo-correndo.png", {
     sliceX: 4, // Agora são 4 quadros na horizontal (colunas)
     sliceY: 2, // E 2 quadros na vertical (linhas)
@@ -47,37 +86,6 @@ loadSprite("lobo_morrendo", "frontend/assets/sprites/lobo-morrendo.png", {
     sliceY: 1,
     anims: {
         morte: { from: 0, to: 4, loop: false, speed: 10 }
-    }
-});
-
-loadSprite("esqueleto", "frontend/assets/sprites/Esqueleto-andando.png", {
-    sliceX: 8, 
-    sliceY: 1,
-    anims: {
-        "idle": { from: 0, to: 0 },
-        "walk": { from: 0, to: 7, speed: 8, loop: true }
-    }
-});
-
-loadSprite("esqueleto_ataque", "frontend/assets/sprites/Esqueleto-atacando.png", {
-    sliceX: 5, // MUDE AQUI: Coloque o número exato de quadros do esqueleto atacando
-    sliceY: 1,
-    anims: { "ataque": { from: 0, to: 4, speed: 10, loop: false } }
-});
-
-loadSprite("esqueleto_caido", "frontend/assets/sprites/esqueleto-caido.png");
-
-loadSprite("player_ataque", "frontend/assets/sprites/Personagem-Principal-atacando.png", {
-    sliceX: 5, // MUDE AQUI: Coloque o número exato de quadros da animação de ataque
-    sliceY: 1,
-    anims: { "ataque": { from: 0, to: 4, speed: 15, loop: false } }
-});
-
-loadSprite("player_ataque_baixo", "frontend/assets/sprites/ataque-pulo-para-baixo.png", {
-    sliceX: 4, // A imagem tem exatamente 4 quadros lado a lado
-    sliceY: 1,
-    anims: { 
-        "ataque_baixo": { from: 0, to: 3, speed: 12, loop: false } 
     }
 });
 
@@ -119,9 +127,44 @@ loadSprite("explosao_azul", "frontend/assets/sprites/explosao-azul.png", {
     }
 });
 
-// Carregamento dos Itens
+// CORVOS
+loadSprite("corvo_voando", "frontend/assets/sprites/corvo-voando-sheet.png", {
+    sliceX: 7,
+    sliceY: 1,
+    anims: {
+        "voar": { from: 0, to: 6, speed: 12, loop: true }
+    }
+});
+loadSprite("corvo_explodindo", "frontend/assets/sprites/corvo-explodindo-sheet.png", {
+    sliceX: 7,
+    sliceY: 1,
+    anims: {
+        "explodir": { from: 0, to: 6, speed: 14, loop: false }
+    }
+});
+
+// ITENS
 loadSprite("pocao-vida", "frontend/assets/sprites/pocao-vida.png");
 loadSprite("asas", "frontend/assets/sprites/asas.png");
+loadSprite("pocao-mana", "frontend/assets/sprites/pocao-mana.png");
+
+// Conjurar bola de fogo (tecla X): 5 quadros de 362x175, com os pés sempre no centro de cada quadro
+loadSprite("player_conjurar", "frontend/assets/sprites/Personagem-principal-ataque-cajado-sheet.png", {
+    sliceX: 5,
+    sliceY: 1,
+    anims: {
+        "conjurar": { from: 0, to: 4, speed: 14, loop: false }
+    }
+});
+
+// Bola de fogo: quadro 0 = acendendo, 1 a 3 = voando, 4 = impacto (5 quadros de 342x175)
+loadSprite("bola_fogo", "frontend/assets/sprites/projetil-bola-de-fogo-mago-sheet.png", {
+    sliceX: 5,
+    sliceY: 1,
+    anims: {
+        "voo": { from: 1, to: 3, speed: 14, loop: true }
+    }
+});
 
 // LISTA DE TODOS OS TILES DO CASTELO (Mapeados exatamente na ordem do Tiled Editor)
 const tilesets = [
@@ -156,13 +199,14 @@ loadSound("voz_hit_3", "frontend/assets/sounds/mago-sendo-acertado-3.mp3");
 loadSound("som_ataque", "frontend/assets/sounds/player-ataque-espada.mp3");
 loadSound("som_morte_jogador", "frontend/assets/sounds/mago-morrendo.mp3");
 
-//LOBO
-loadSound("som_lobo_ataque", "frontend/assets/sounds/lobo-atacando.mp3");
-loadSound("som_lobo_morte", "frontend/assets/sounds/lobo-morrendo.mp3");
-
 // ESQUELETO
 loadSound("som_ataque_esqueleto", "frontend/assets/sounds/ataque-esqueleto.mp3");
 loadSound("som_quebrar", "frontend/assets/sounds/esqueleto-quebrando.mp3");
+loadSound("som_bola_de_fogo", "frontend/assets/sounds/magia-fogo.mp3");
+
+//LOBO
+loadSound("som_lobo_ataque", "frontend/assets/sounds/lobo-atacando.mp3");
+loadSound("som_lobo_morte", "frontend/assets/sounds/lobo-morrendo.mp3");
 
 // LICH
 loadSound("risada_lich_1", "frontend/assets/sounds/risada-lich-1.mp3");
