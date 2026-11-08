@@ -22,22 +22,17 @@
 //                     até 16px) em rampas suaves. false/ausente = deixa como escada
 //   hitboxEstreita -> true = o jogador usa tronco largo e pés estreitos, para andar em rampas sem
 //                     ficar "no ar" pela quina da caixa de colisão
+//   proximoLevel   -> (opcional) id do level que abre quando o jogador entra no objeto "fim-level" do Tiled.
+//                     Sem isso, o "fim-level" volta para o menu
+//   exigeChave     -> true = o "fim-level" só funciona se o jogador tiver a chave (item "chave" do Tiled)
+//   itensDeTeste   -> true = solta poção de vida, asas e poção de mana ao lado do jogador (para levels que ainda não
+//                     têm itens colocados no Tiled). Os itens normais vêm dos objetos da camada de objetos (ver itens.js)
 
 export const LEVELS = {
+    // Floresta: o level definitivo (começo do jogo)
     "level-1": {
-        nome: "Castelo",
+        nome: "Floresta",
         arquivo: "frontend/assets/levels/level-1.tmj",
-        tipo: "tiles-individuais",
-        blocosSolidos: [31, 29, 28, 30, 27, 24, 22, 38, 4, 35],
-        escala: 1,
-        musica: "musica_fase1",
-        fundo: { sprite: "background_fase1", modo: "mundo", x: -200, y: -300, escala: 3 },
-        esqueletoPadrao: { x: 500, y: 100 },
-    },
-
-    "level-teste": {
-        nome: "Floresta (teste)",
-        arquivo: "frontend/assets/levels/level-teste.tmj",
         tipo: "tileset",
         camadasSolidas: ["solidos"],
         escala: 1,
@@ -46,7 +41,22 @@ export const LEVELS = {
         solidoOffsetY: 5,
         rampas: { maxDegrau: 16 },
         hitboxEstreita: true,
+        exigeChave: true,              // a saída ("fim-level") só abre com a chave
+        proximoLevel: "level-teste",   // depois da floresta vem o castelo (por enquanto, em fase de testes)
         // sem esqueletoPadrao: o level só tem esqueletos se você colocar objetos "esqueleto-spawn" no Tiled
+    },
+
+    // Castelo: ainda em fase de testes
+    "level-teste": {
+        nome: "Castelo (teste)",
+        arquivo: "frontend/assets/levels/level-teste.tmj",
+        tipo: "tiles-individuais",
+        blocosSolidos: [31, 29, 28, 30, 27, 24, 22, 38, 4, 35],
+        escala: 1,
+        musica: "musica_fase1",
+        fundo: { sprite: "background_fase1", modo: "mundo", x: -200, y: -300, escala: 3 },
+        esqueletoPadrao: { x: 500, y: 100 },
+        itensDeTeste: true,
     },
 };
 

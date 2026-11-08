@@ -2,10 +2,12 @@ import { criarJogador } from "../entidades/jogador.js";
 import { criarEsqueleto } from "../entidades/esqueletos.js";
 import { criarLobo } from "../entidades/lobo.js";
 import { criarSpawnerCorvos } from "../entidades/corvos.js";
+import { criarGuardiao } from "../entidades/guardiao.js";
 import { criarLich, criarExplosaoVerde, criarExplosaoAzul } from "../entidades/lich.js";
 import { LEVELS, LEVEL_PADRAO } from "../levels.js";
 import { carregarMapa } from "../mapa.js";
 import { BALANCEAMENTO } from "../balanceamento.js";
+import { ITENS } from "../itens.js";
 
 export async function cenaJogo(data = { lives: 3 }) {
     setGravity(2400);
@@ -95,6 +97,8 @@ export async function cenaJogo(data = { lives: 3 }) {
             get("raioLich").forEach(r => { r.paused = true; });
             get("corvo").forEach(c => { c.paused = true; if (c.visual) c.visual.paused = true; });
             get("spawnerCorvos").forEach(s => { s.paused = true; });
+            get("guardiao").forEach(g => { g.paused = true; });
+            get("mascaraGuardiao").forEach(m => { m.paused = true; });
             get("bolaDeFogoJogador").forEach(b => { b.paused = true; if (b.visual) b.visual.paused = true; });
             get("avisoRaio").forEach(a => { a.paused = true; }); 
             
@@ -111,6 +115,8 @@ export async function cenaJogo(data = { lives: 3 }) {
             get("raioLich").forEach(r => { r.paused = false; });
             get("corvo").forEach(c => { c.paused = false; if (c.visual) c.visual.paused = false; });
             get("spawnerCorvos").forEach(s => { s.paused = false; });
+            get("guardiao").forEach(g => { g.paused = false; });
+            get("mascaraGuardiao").forEach(m => { m.paused = false; });
             get("bolaDeFogoJogador").forEach(b => { b.paused = false; if (b.visual) b.visual.paused = false; });
             get("avisoRaio").forEach(a => { a.paused = false; }); 
             
@@ -181,6 +187,15 @@ export async function cenaJogo(data = { lives: 3 }) {
                 sistemaInventario.removerItemAtual();
                 atualizarHUDInventario();
             }
+        } else if (item.tipo === "chave") {
+            // A chave não se "usa" daqui: ela é gasta sozinha quando o jogador encosta na saída da fase
+            add([
+                text("Leve a chave até a saída", { size: 14 }),
+                pos(player.pos.x, player.pos.y - 40),
+                anchor("center"),
+                color(255, 220, 100),
+                lifespan(1.2, { fade: 1.2 })
+            ]);
         } else {
             player.gravityScale = 1; // Restaura a gravidade alterando a propriedade
             add([
@@ -246,37 +261,57 @@ export async function cenaJogo(data = { lives: 3 }) {
     if (spawnLich) {
         criarLich(spawnLich.x, spawnLich.y);
     }
+    // Guardião mascarado (chefe de 2 fases): um para cada ponto "guardiao-spawn" do Tiled (o ponto marca os pés dele)
+    mapa.spawnsGuardioes.forEach(spawn => {
+        const guardiao = criarGuardiao(spawn.x, spawn.y);
+        guardiao.on("morreu", () => {
+            barraGuardiaoAtiva = false;
+            [guardBarBg, guardBarBack, guardHpBar, guardMarca, guardTexto].forEach(e => { e.hidden = true; });
+            add([
+                text("GUARDIÃO DERROTADO!", { size: 28 }),
+                pos(center().x, center().y - 200),
+                anchor("center"),
+                color(100, 255, 100),
+                fixed(),
+                lifespan(4, { fade: 1 })
+            ]);
+        });
+    });
 
-    // === GERAÇÃO DOS ITENS NO MAPA ===
-    // Poção de Vida
-    add([
-        sprite("pocao-vida"), 
-        pos(spawnPlayerX + 80, spawnPlayerY),
-        scale(0.2), // <--- AJUSTE A ESCALA AQUI (ex: 0.3 ou 0.35)
-        area(), 
-        "item_coletavel",
-        { nome: "Poção", tipo: "cura", spriteId: "pocao-vida" } // Adicionamos a referência do id do sprite aqui
-    ]);
+    // === ITENS E SAÍDA DA FASE ===
+    // Os itens vêm da camada de objetos do Tiled: um ponto com o nome do item ("pocao-vida", "pocao-mana", "asas",
+    // "chave"). O ponto é o CENTRO do item. Sprite, tamanho e tipo de cada um ficam em itens.js.
+    function criarItem(id, x, y) {
+        const def = ITENS[id];
+        add([
+            sprite(def.sprite),
+            pos(x, y),
+            anchor("center"),
+            scale(def.escala),
+            area(),
+            "item_coletavel",
+            { nome: def.nome, tipo: def.tipo, spriteId: def.sprite } // spriteId: referência do sprite para a HUD do inventário
+        ]);
+    }
+    mapa.itens.forEach(item => criarItem(item.id, item.x, item.y));
 
-    // Asas
-    add([
-        sprite("asas"), 
-        pos(spawnPlayerX + 160, spawnPlayerY), 
-        scale(0.2), // <--- AJUSTE A ESCALA AQUI
-        area(),
-        "item_coletavel",
-        { nome: "Asas", tipo: "voo", spriteId: "asas" } // Adicionamos a referência do id do sprite aqui
-    ]);
+    // Levels de teste que ainda não têm itens no Tiled (levels.js: itensDeTeste) soltam os três itens ao lado do jogador
+    if (level.itensDeTeste) {
+        criarItem("pocao-vida", spawnPlayerX + 80, spawnPlayerY);
+        criarItem("asas", spawnPlayerX + 160, spawnPlayerY);
+        criarItem("pocao-mana", spawnPlayerX + 240, spawnPlayerY);
+    }
 
-    // Poção de Mana (recupera toda a mana; usa com a tecla S, como a poção de vida)
-    add([
-        sprite("pocao-mana"), 
-        pos(spawnPlayerX + 240, spawnPlayerY),
-        scale(0.2),
-        area(),
-        "item_coletavel",
-        { nome: "Poção de Mana", tipo: "mana", spriteId: "pocao-mana" }
-    ]);
+    // Saída da fase: o retângulo "fim-level" do Tiled (invisível). Ver player.onCollideUpdate("fimLevel") mais abaixo.
+    if (mapa.fimLevel) {
+        add([
+            rect(mapa.fimLevel.w, mapa.fimLevel.h),
+            pos(mapa.fimLevel.x, mapa.fimLevel.y),
+            area(),
+            opacity(0),
+            "fimLevel"
+        ]);
+    }
 
     // HUD FIXO
     add([ rect(320, 90), pos(15, 15), color(0, 0, 0), opacity(0.6), fixed(), z(100) ]);
@@ -372,6 +407,26 @@ export async function cenaJogo(data = { lives: 3 }) {
 
     let barraBossAtiva = false; // Controla se o chefe já recebeu o primeiro golpe
 
+    // --- HUD DA BARRA DE VIDA DO GUARDIÃO (aparece no primeiro golpe; o risco branco marca os 50% da fase 2) ---
+    const larguraBarraGuardiao = 400;
+    const guardBarBg = add([ rect(larguraBarraGuardiao + 8, 24), pos(width() / 2, 35), anchor("center"), color(0, 0, 0), opacity(0.7), fixed(), z(100) ]);
+    const guardBarBack = add([ rect(larguraBarraGuardiao, 16), pos(width() / 2, 35), anchor("center"), color(60, 30, 80), fixed(), z(101) ]);
+    const guardHpBar = add([ rect(larguraBarraGuardiao, 16), pos(width() / 2 - larguraBarraGuardiao / 2, 27), color(150, 60, 220), fixed(), z(102) ]);
+    const guardMarca = add([ rect(2, 16), pos(width() / 2, 27), color(255, 255, 255), opacity(0.8), fixed(), z(103) ]);
+    const guardTexto = add([ text("GUARDIÃO MASCARADO", { size: 14 }), pos(width() / 2, 18), anchor("center"), color(255, 255, 255), fixed(), z(103) ]);
+    [guardBarBg, guardBarBack, guardHpBar, guardMarca, guardTexto].forEach(e => { e.hidden = true; });
+    let barraGuardiaoAtiva = false;
+
+    function danificarGuardiao(guardiao, dano, direcao) {
+        if (guardiao.morto) return;
+        guardiao.receberDano(dano, direcao);
+        guardHpBar.width = (guardiao.hp / guardiao.maxHp) * larguraBarraGuardiao;
+        if (!barraGuardiaoAtiva && !guardiao.morto) {
+            barraGuardiaoAtiva = true;
+            [guardBarBg, guardBarBack, guardHpBar, guardMarca, guardTexto].forEach(e => { e.hidden = false; });
+        }
+    }
+
     function triggerDeath() {
         if (musicaFase) {
             musicaFase.paused = true;
@@ -453,6 +508,53 @@ export async function cenaJogo(data = { lives: 3 }) {
         }
     }); 
 
+    // Saída da fase. Se o level exige a chave (levels.js: exigeChave) e o jogador não tem, só aparece um aviso.
+    // Com a chave (ou sem essa exigência), a chave é gasta e abre o próximo level (levels.js: proximoLevel).
+    let faseConcluida = false;
+    let ultimoAvisoSaida = -10;
+    const temChave = () => sistemaInventario.itens.some(i => i.tipo === "chave");
+    function gastarChave() {
+        const i = sistemaInventario.itens.findIndex(item => item.tipo === "chave");
+        if (i < 0) return;
+        sistemaInventario.itens.splice(i, 1);
+        sistemaInventario.indiceSelecionado = Math.max(0, Math.min(sistemaInventario.indiceSelecionado, sistemaInventario.itens.length - 1));
+        atualizarHUDInventario();
+    }
+    player.onCollideUpdate("fimLevel", (saida) => {
+        if (faseConcluida) return;
+
+        if (level.exigeChave && !temChave()) {
+            if (time() - ultimoAvisoSaida > 1.5) {
+                ultimoAvisoSaida = time();
+                add([
+                    text("Precisa da chave!", { size: 16 }),
+                    pos(saida.pos.x + saida.width / 2, saida.pos.y - 20),
+                    anchor("center"),
+                    color(255, 120, 120),
+                    lifespan(1.2, { fade: 1.2 })
+                ]);
+            }
+            return;
+        }
+
+        faseConcluida = true;
+        if (level.exigeChave) gastarChave();
+        player.paused = true;
+        if (musicaFase) musicaFase.paused = true;
+        add([
+            text("FASE CONCLUÍDA!", { size: 36 }),
+            pos(center().x, center().y - 100),
+            anchor("center"),
+            color(100, 255, 100),
+            fixed(),
+            z(900)
+        ]);
+        wait(2, () => {
+            if (level.proximoLevel) go("game", { lives: currentLives, level: level.proximoLevel });
+            else go("menu");
+        });
+    });
+
     // Corvo: ao encostar no jogador explode e causa dano. Se o jogador estiver piscando (invulnerável
     // depois de um golpe), o corvo atravessa sem explodir. Espada e bola de fogo não o afetam.
     // onCollideUpdate (e não onCollide) porque o corvo pode já estar encostado quando o jogador deixa de piscar.
@@ -464,6 +566,11 @@ export async function cenaJogo(data = { lives: 3 }) {
 
     player.onCollide("ataqueInimigo", (enemy) => {
       causarDanoJogador(40, enemy.pos.x);
+    });
+
+    // Golpes do Guardião (espadada e pouso): cada caixa de dano traz o seu "dano" (ver balanceamento.js)
+    player.onCollide("ataqueGuardiao", (golpe) => {
+      causarDanoJogador(golpe.dano, golpe.pos.x);
     });
 
     // === DANO NOS ESQUELETOS ===
@@ -680,6 +787,72 @@ export async function cenaJogo(data = { lives: 3 }) {
             color(255, 150, 50),
             lifespan(0.4, { fade: 0.4 })
         ]);
+    });
+
+    // Espada (Ataque lateral) vs Corvo
+    onCollide("ataqueJogador", "corvo", (ataque, corvo) => {
+        if (!corvo.ativo || corvo.explodindo) return;
+        corvo.explodir();
+        
+        add([
+            text("HIT!", { size: 12 }),
+            pos(corvo.pos.x, corvo.pos.y - 20),
+            color(255, 150, 50),
+            lifespan(0.4, { fade: 0.4 })
+        ]);
+    });
+
+    // Espada (Ataque para baixo) vs Corvo
+    onCollide("ataqueBaixoJogador", "corvo", (ataque, corvo) => {
+        if (!corvo.ativo || corvo.explodindo) return;
+        corvo.explodir();
+        
+        add([
+            text("HIT!", { size: 12 }),
+            pos(corvo.pos.x, corvo.pos.y - 20),
+            color(255, 150, 50),
+            lifespan(0.4, { fade: 0.4 })
+        ]);
+    });
+
+    // Ataque lateral da espada vs Lich
+    onCollide("ataqueJogador", "boss", (ataque, boss) => {
+        if (boss.isDead) return;
+        const dirEmpurrao = (boss.pos.x > player.pos.x) ? 1 : -1;
+        processarDanoBoss(boss, BALANCEAMENTO.dano.espada, 30, dirEmpurrao);
+        destroy(ataque);
+    });
+
+    // Ataque para baixo da espada vs Lich
+    onCollide("ataqueBaixoJogador", "boss", (ataque, boss) => {
+        if (boss.isDead) return;
+        const dirEmpurrao = (boss.pos.x > player.pos.x) ? 1 : -1;
+        processarDanoBoss(boss, BALANCEAMENTO.dano.espada, 30, dirEmpurrao);
+        destroy(ataque);
+    });
+
+    // Bola de fogo vs Lich
+    onCollide("bolaDeFogoJogador", "boss", (bola, boss) => {
+        if (bola.acabou || boss.isDead) return;
+        processarDanoBoss(boss, BALANCEAMENTO.dano.espada, 15, bola.dir); // Espada/fogo tirando o dano configurado
+        bola.explodir();
+    });
+
+    // Espada e bola de fogo vs Guardião
+    onCollide("ataqueJogador", "guardiao", (ataque, guardiao) => {
+        if (guardiao.morto) return;
+        danificarGuardiao(guardiao, BALANCEAMENTO.dano.espada, (guardiao.pos.x > player.pos.x) ? 1 : -1);
+        destroy(ataque);
+    });
+    onCollide("ataqueBaixoJogador", "guardiao", (ataque, guardiao) => {
+        if (guardiao.morto) return;
+        danificarGuardiao(guardiao, BALANCEAMENTO.dano.espada, (guardiao.pos.x > player.pos.x) ? 1 : -1);
+        destroy(ataque);
+    });
+    onCollide("bolaDeFogoJogador", "guardiao", (bola, guardiao) => {
+        if (bola.acabou || guardiao.morto) return;
+        danificarGuardiao(guardiao, bola.dano, bola.dir);
+        bola.explodir();
     });
 
     // Função central de dano no Lich. Espada: 5 HP e empurra 30px; bola de fogo: 3 HP e empurra 15px.

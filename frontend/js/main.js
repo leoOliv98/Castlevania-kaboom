@@ -143,10 +143,43 @@ loadSprite("corvo_explodindo", "frontend/assets/sprites/corvo-explodindo-sheet.p
     }
 });
 
+// GUARDIÃO (chefe): cada folha tem quadros de tamanho igual, com os pés sempre na mesma linha
+loadSprite("guardiao_correndo_mascara", "frontend/assets/sprites/guardiao-correndo-mascara-sheet.png", {
+    sliceX: 8,
+    sliceY: 1,
+    anims: {
+        "idle": { from: 0, to: 0 },
+        "correr": { from: 0, to: 7, speed: 12, loop: true }
+    }
+});
+loadSprite("guardiao_correndo", "frontend/assets/sprites/guardiao-correndo-sheet.png", {
+    sliceX: 8,
+    sliceY: 1,
+    anims: {
+        "idle": { from: 0, to: 0 },
+        "correr": { from: 0, to: 7, speed: 12, loop: true }
+    }
+});
+// Espadada da fase 1: quadros 0-2 preparando, 3-4 o corte, 5 recuperando (o golpe sai no quadro 3)
+loadSprite("guardiao_ataque_mascara", "frontend/assets/sprites/guardiao-ataque-mascara-sheet.png", {
+    sliceX: 3,  // 3 colunas x 2 linhas (a imagem não passa de 2048 px); a animação segue a ordem 0 a 5
+    sliceY: 2,
+    anims: {
+        "ataque": { from: 0, to: 5, speed: 10, loop: false }
+    }
+});
+// Pulo da fase 2: 0 agachando, 1-3 subindo, 4-5 caindo, 6 impacto, 7 levantando (os quadros são escolhidos pelo código)
+loadSprite("guardiao_salto", "frontend/assets/sprites/guardiao-salto-sheet.png", {
+    sliceX: 8,
+    sliceY: 1
+});
+loadSprite("guardiao_mascara", "frontend/assets/sprites/guardiao-mascara.png");
+
 // ITENS
 loadSprite("pocao-vida", "frontend/assets/sprites/pocao-vida.png");
 loadSprite("asas", "frontend/assets/sprites/asas.png");
 loadSprite("pocao-mana", "frontend/assets/sprites/pocao-mana.png");
+loadSprite("chave", "frontend/assets/sprites/chave.png");
 
 // Conjurar bola de fogo (tecla X): 5 quadros de 362x175, com os pés sempre no centro de cada quadro
 loadSprite("player_conjurar", "frontend/assets/sprites/Personagem-principal-ataque-cajado-sheet.png", {
@@ -204,9 +237,12 @@ loadSound("som_ataque_esqueleto", "frontend/assets/sounds/ataque-esqueleto.mp3")
 loadSound("som_quebrar", "frontend/assets/sounds/esqueleto-quebrando.mp3");
 loadSound("som_bola_de_fogo", "frontend/assets/sounds/magia-fogo.mp3");
 
-//LOBO
+// LOBO
 loadSound("som_lobo_ataque", "frontend/assets/sounds/lobo-atacando.mp3");
 loadSound("som_lobo_morte", "frontend/assets/sounds/lobo-morrendo.mp3");
+
+// CORVO
+loadSound("som_corvo_morte", "frontend/assets/sounds/corvo-morrendo.mp3");
 
 // LICH
 loadSound("risada_lich_1", "frontend/assets/sounds/risada-lich-1.mp3");

@@ -2,6 +2,8 @@
 // Carrega um mapa do Tiled (.tmj) e cria no Kaboom: tiles, colisões e spawns.
 // Quem decide COMO o mapa é lido é o campo "tipo" do level (ver levels.js).
 
+import { ITENS } from "./itens.js";
+
 const TAM_CHUNK_PX = 1024; // lado dos "pedaços" em que o visual é desenhado (o atlas do Kaboom aceita até 2048)
 
 // Bits de espelhamento que o Tiled guarda nos bits altos do ID do tile
@@ -189,6 +191,9 @@ function lerObjetos(json, level, escala) {
     let spawnPlayer = { x: 150, y: 100 };
     const spawnsEsqueletos = [];
     const spawnsLobos = [];
+    const spawnsGuardioes = [];
+    const itens = [];      // itens coletáveis: um para cada ponto com o nome de um item de itens.js
+    let fimLevel = null;   // retângulo da saída da fase (objeto "fim-level")
     let spawnLich = null;
     let zonaCorvoSpawn = null; // retângulo (folhas da árvore onde os corvos nascem)
     let zonaCorvoFim = null;   // retângulo (folhas da árvore onde os corvos somem)
@@ -203,6 +208,9 @@ function lerObjetos(json, level, escala) {
                 else if (obj.name === "esqueleto-spawn") spawnsEsqueletos.push(p);
                 else if (obj.name === "lobo-spawn") spawnsLobos.push(p);
                 else if (obj.name === "lich-spawn") spawnLich = p;
+                else if (obj.name === "guardiao-spawn") spawnsGuardioes.push(p);
+                else if (obj.name === "fim-level") fimLevel = retangulo(obj);
+                else if (ITENS[obj.name]) itens.push({ id: obj.name, ...p });
                 else if (obj.name === "corvo-spawn") zonaCorvoSpawn = retangulo(obj);
                 else if (obj.name === "corvo-fim") zonaCorvoFim = retangulo(obj);
             });
@@ -219,7 +227,7 @@ function lerObjetos(json, level, escala) {
     }
     const zonasCorvo = (zonaCorvoSpawn && zonaCorvoFim) ? { spawn: zonaCorvoSpawn, fim: zonaCorvoFim } : null;
 
-    return { spawnPlayer, spawnsLobos, spawnsEsqueletos, spawnLich, zonasCorvo };
+    return { spawnPlayer, spawnsLobos, spawnsEsqueletos, spawnsGuardioes, spawnLich, zonasCorvo, itens, fimLevel };
 }
 
 // ---------------------------------------------------------------------------
