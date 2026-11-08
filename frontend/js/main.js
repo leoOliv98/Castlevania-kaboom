@@ -168,6 +168,13 @@ loadSprite("guardiao_ataque_mascara", "frontend/assets/sprites/guardiao-ataque-m
         "ataque": { from: 0, to: 5, speed: 10, loop: false }
     }
 });
+loadSprite("guardiao_ataque", "frontend/assets/sprites/guardiao-ataque-sheet.png", {
+    sliceX: 3,
+    sliceY: 2,
+    anims: {
+        "ataque": { from: 0, to: 5, speed: 10, loop: false }
+    }
+});
 // Pulo da fase 2: 0 agachando, 1-3 subindo, 4-5 caindo, 6 impacto, 7 levantando (os quadros são escolhidos pelo código)
 loadSprite("guardiao_salto", "frontend/assets/sprites/guardiao-salto-sheet.png", {
     sliceX: 8,

@@ -60,6 +60,9 @@ export const BALANCEAMENTO = {
             alcance: 165,          // comprimento da caixa de dano, a partir do chefe (px)
             altura: 110,           // altura da caixa de dano (px)
             duracao: 0.22,         // segundos que a caixa de dano fica ativa
+            naFase2: true,         // true = na fase 2 ele também dá a espadada quando o jogador está perto
+            spriteFase2: "guardiao_ataque",   // folha de ataque usada na fase 2. Quando tiver a versão SEM máscara,
+                                                      // carregue no main.js (ex.: "guardiao_ataque") e troque o nome aqui
         },
         pulo: {
             distanciaInicio: 380,  // fase 2: pula no jogador quando ele está a menos disso (horizontal)

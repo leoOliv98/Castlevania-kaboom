@@ -5,8 +5,9 @@
 // FASE 1 (com máscara): fica parado até o jogador chegar perto. Aí corre atrás dele e, ao chegar no alcance,
 //   dá uma espadada. Depois do golpe faz uma pausa (1 s) e volta a perseguir.
 // FASE 2 (sem máscara, a 50% da vida): a máscara cai no chão (só enfeite, sem colisão). Ele persegue o jogador
-//   de qualquer distância e, ao chegar perto, dá um pulo alto e despenca em cima dele. Se o jogador estiver
-//   embaixo dele quando ele aterrissa, leva dano. Depois do pouso, pausa e volta a perseguir.
+//   de qualquer distância. Se o jogador estiver bem perto, dá a mesma espadada da fase 1; se estiver a uma
+//   distância média, dá um pulo alto e despenca em cima dele. Se o jogador estiver embaixo dele quando ele
+//   aterrissa, leva dano. Depois do golpe ou do pouso, pausa e volta a perseguir.
 //
 // Colocação no Tiled: um objeto de ponto chamado "guardiao-spawn" (na camada de objetos, como o "lobo-spawn").
 // O ponto marca onde ficam os PÉS do guardião: se estiver no ar, ele cai até o chão.
@@ -148,7 +149,8 @@ export function criarGuardiao(spawnX, spawnPesY) {
         mudar("atacando");
         golpeou = false;
         virarPara(player.pos.x);
-        usar("guardiao_ataque_mascara", "ataque");
+        // fase 1 usa a folha com máscara; a fase 2 usa cfg.espada.spriteFase2 (ver balanceamento.js)
+        usar(g.fase === 1 ? "guardiao_ataque_mascara" : cfg.espada.spriteFase2, "ataque");
     }
 
     function golpeDeEspada() {
@@ -318,6 +320,11 @@ export function criarGuardiao(spawnX, spawnPesY) {
                     if (Math.abs(dx) > 8 && !andar(d, cfg.velocidadeFase1)) ficarParadoAnimando();
                     else if (g.curAnim() !== "correr" || spriteAtual !== nomeCorrendo()) usar(nomeCorrendo(), "correr");
                 } else {
+                    // jogador bem perto: espadada (a mesma da fase 1); mais longe: pulo
+                    if (cfg.espada.naFase2 && g.isGrounded() && Math.abs(dx) < cfg.espada.distanciaInicio && Math.abs(dy) < cfg.espada.alturaMaxima) {
+                        comecarAtaque(player);
+                        break;
+                    }
                     if (g.t >= cfg.pulo.perseguirMinimo && g.isGrounded() && Math.abs(dx) < cfg.pulo.distanciaInicio) {
                         comecarPulo(player);
                         break;
