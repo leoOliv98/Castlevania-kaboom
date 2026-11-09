@@ -1,7 +1,12 @@
 // database/models/index.js
 // Inicializa a conexão com o PostgreSQL, instancia o ORM e registra os modelos User e Score
 
-const { Pool } = require('pg');
+const { Pool, types } = require('pg');
+
+// O Postgres (no Docker) grava CURRENT_TIMESTAMP em UTC, em colunas TIMESTAMP sem fuso.
+// Sem isto, o Node leria esse horário como se fosse local (3h a mais no Brasil).
+// Aqui avisamos que o valor é UTC; o navegador converte para o fuso de cada usuário.
+types.setTypeParser(1114, (valor) => new Date(valor + 'Z'));
 const { ORM, Op } = require('../orm');
 const defineUserModel = require('./User');
 const defineScoreModel = require('./Score');
@@ -11,7 +16,7 @@ const pool = new Pool({
     host: process.env.DB_HOST || '127.0.0.1',
     database: process.env.DB_NAME || 'gamehost_db',
     password: process.env.DB_PASSWORD || 'deves2020',
-    port: Number(process.env.DB_PORT) || 5432,
+    port: Number(process.env.DB_PORT) || 5433,
 });
 
 const orm = new ORM(pool);

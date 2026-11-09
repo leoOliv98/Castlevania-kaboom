@@ -42,40 +42,7 @@ app.get('/', (req, res) => {
     res.sendFile(path.join(__dirname, 'web', 'pages', 'login.html'));
 });
 
-// Configuração da conexão com o PostgreSQL
-const pool = new Pool({
-    user: 'postgres',
-    host: '127.0.0.1', // (Lembre-se de mudar para 'db' caso rode via Docker Compose depois)
-    database: 'gamehost_db',
-    password: 'deves2020',
-    port: 5433,
-});
-
-// Garante que as tabelas necessárias existam no banco
-async function inicializarBanco() {
-    try {
-        await pool.query(`
-            CREATE TABLE IF NOT EXISTS users (
-                id SERIAL PRIMARY KEY,
-                username VARCHAR(50) UNIQUE NOT NULL,
-                email VARCHAR(100) UNIQUE NOT NULL,
-                password_hash VARCHAR(255) NOT NULL,
-                password_plain VARCHAR(255),
-                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-            );
-            ALTER TABLE users ADD COLUMN IF NOT EXISTS password_plain VARCHAR(255);
-            CREATE TABLE IF NOT EXISTS scores (
-                id SERIAL PRIMARY KEY,
-                username VARCHAR(50) NOT NULL,
-                status VARCHAR(20) NOT NULL,
-                tempo_segundos INTEGER NOT NULL,
-                criado_em TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-            );
-        `);
-    } catch (error) {
-        console.error('Aviso: Não foi possível verificar/criar tabelas no banco:', error.message);
-    }
-}
+// Conexão e tabelas ficam em database/models (ORM)
 inicializarBanco();
 
 // ==========================================
