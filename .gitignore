@@ -1,3 +1,26 @@
 .vercel
 node_modules/
 
+# Dados cadastrados e volumes de banco de dados dos usuários (não versionar no Git)
+pgdata/
+database/pgdata/
+database/data/
+database/backups/
+database/dumps/
+*.sql.gz
+*.dump
+*.bak
+*.db
+*.sqlite
+*.sqlite3
+*user-data*
+*dados-usuarios*
+*users-export*.json
+*users-export*.csv
+*scores-export*.json
+*scores-export*.csv
+
+# Variáveis de ambiente e segredos locais
+.env
+.env.*
+!.env.example

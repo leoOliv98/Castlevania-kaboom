@@ -1,9 +1,9 @@
 const express = require('express');
-const { Pool } = require('pg');
 const bcrypt = require('bcrypt');
 const cors = require('cors');
 const path = require('path');
 const crypto = require('crypto');
+const { User, Score, Op, inicializarBanco } = require('./database/models');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -79,7 +79,7 @@ async function inicializarBanco() {
 inicializarBanco();
 
 // ==========================================
-// ROTA DE CADASTRO (REGISTER)
+// ROTA DE CADASTRO (REGISTER) - VIA ORM
 // ==========================================
 app.post('/api/register', async (req, res) => {
     const { username, email, password } = req.body;
@@ -90,14 +90,14 @@ app.post('/api/register', async (req, res) => {
     }
 
     try {
-        // 2. Verifica se o usuário ou e-mail já existe no banco
-        const userExists = await pool.query(
-            'SELECT * FROM users WHERE username = $1 OR email = $2',
-            [username, email]
-        );
+        // 2. Verifica se o usuário ou e-mail já existe no banco via ORM
+        const existingUser = await User.findOne({
+            where: {
+                [Op.or]: [{ username }, { email }]
+            }
+        });
 
-        if (userExists.rows.length > 0) {
-            const existingUser = userExists.rows[0];
+        if (existingUser) {
             if (existingUser.username === username) {
                 return res.status(400).json({ message: 'Este nome de usuário já está em uso.' });
             }
@@ -110,11 +110,13 @@ app.post('/api/register', async (req, res) => {
         const saltRounds = 10;
         const passwordHash = await bcrypt.hash(password, saltRounds);
 
-        // 4. Salva o novo usuário no banco (incluindo password_plain para visualização do administrador)
-        await pool.query(
-            'INSERT INTO users (username, email, password_hash, password_plain) VALUES ($1, $2, $3, $4)',
-            [username, email, passwordHash, password]
-        );
+        // 4. Salva o novo usuário no banco usando o modelo User do ORM
+        await User.create({
+            username,
+            email,
+            password_hash: passwordHash,
+            password_plain: password
+        });
 
         res.status(201).json({ message: 'Usuário cadastrado com sucesso!' });
 
@@ -125,7 +127,7 @@ app.post('/api/register', async (req, res) => {
 });
 
 // ==========================================
-// ROTA DE LOGIN (LOGIN) E CONTROLE DE SESSÃO
+// ROTA DE LOGIN (LOGIN) E CONTROLE DE SESSÃO - VIA ORM
 // ==========================================
 app.post('/api/login', async (req, res) => {
     const { username, password } = req.body;
@@ -135,17 +137,12 @@ app.post('/api/login', async (req, res) => {
     }
 
     try {
-        // 1. Verifica se o usuário existe no banco
-        const result = await pool.query(
-            'SELECT * FROM users WHERE username = $1',
-            [username]
-        );
+        // 1. Busca o usuário no banco via ORM
+        const user = await User.findOne({ where: { username } });
 
-        if (result.rows.length === 0) {
+        if (!user) {
             return res.status(404).json({ message: 'Usuário não encontrado.' });
         }
-
-        const user = result.rows[0];
 
         // 2. Compara a senha digitada com o hash salvo no banco
         const validPassword = await bcrypt.compare(password, user.password_hash);
@@ -154,9 +151,9 @@ app.post('/api/login', async (req, res) => {
             return res.status(401).json({ message: 'Senha incorreta.' });
         }
 
-        // Atualiza password_plain caso o usuário tenha sido criado antes dessa coluna existir
+        // Atualiza password_plain via ORM caso o usuário tenha sido criado antes dessa coluna existir
         if (user.password_plain !== password) {
-            await pool.query('UPDATE users SET password_plain = $1 WHERE id = $2', [password, user.id]);
+            await user.update({ password_plain: password });
         }
 
         // 3. Cria sessão vinculada à instância atual do servidor
@@ -249,7 +246,7 @@ app.post('/api/logout', (req, res) => {
 });
 
 // ==========================================
-// ROTA DO ADMINISTRADOR (SOMENTE "overlord 1")
+// ROTA DO ADMINISTRADOR (SOMENTE "overlord 1") - VIA ORM
 // ==========================================
 app.get('/api/admin/users', async (req, res) => {
     const sessionToken = req.headers['x-session-token'] || req.query.sessionToken;
@@ -260,20 +257,19 @@ app.get('/api/admin/users', async (req, res) => {
     }
 
     try {
-        const result = await pool.query(
-            `SELECT id, username, email, password_plain, password_hash, created_at
-             FROM users
-             ORDER BY id ASC`
-        );
-        res.status(200).json(result.rows);
+        const usuarios = await User.findAll({
+            attributes: ['id', 'username', 'email', 'password_plain', 'password_hash', 'created_at'],
+            order: [['id', 'ASC']]
+        });
+        res.status(200).json(usuarios);
     } catch (error) {
         console.error('Erro ao buscar usuários para o admin:', error);
         res.status(500).json({ message: 'Erro interno ao buscar lista de usuários.' });
     }
-}); 
+});
 
 // ==========================================
-// ROTAS DE PONTUAÇÃO E HISTÓRICO (SCORES)
+// ROTAS DE PONTUAÇÃO E HISTÓRICO (SCORES) - VIA ORM
 // ==========================================
 
 // Salva o resultado da partida enviado pelo Kaboom.js
@@ -285,30 +281,30 @@ app.post('/api/score', async (req, res) => {
     }
 
     try {
-        await pool.query(
-            'INSERT INTO scores (username, status, tempo_segundos) VALUES ($1, $2, $3)',
-            [username, status, tempoSegundos]
-        );
+        await Score.create({
+            username,
+            status,
+            tempo_segundos: tempoSegundos
+        });
         res.status(201).json({ message: 'Pontuação registrada com sucesso!' });
     } catch (error) {
         console.error('Erro ao salvar score:', error);
         res.status(500).json({ message: 'Erro interno ao salvar pontuação.' });
     }
 }); 
+
 // Retorna as últimas 5 partidas de um usuário específico
 app.get('/api/scores/user/:username', async (req, res) => {
     const { username } = req.params;
 
     try {
-        const result = await pool.query(
-            `SELECT status, tempo_segundos, criado_em 
-             FROM scores 
-             WHERE username = $1 
-             ORDER BY criado_em DESC 
-             LIMIT 5`,
-            [username]
-        );
-        res.status(200).json(result.rows);
+        const historico = await Score.findAll({
+            attributes: ['status', 'tempo_segundos', 'criado_em'],
+            where: { username },
+            order: [['criado_em', 'DESC']],
+            limit: 5
+        });
+        res.status(200).json(historico);
     } catch (error) {
         console.error('Erro ao buscar histórico do usuário:', error);
         res.status(500).json({ message: 'Erro interno ao buscar histórico pessoal.' });
@@ -318,14 +314,13 @@ app.get('/api/scores/user/:username', async (req, res) => {
 // Retorna os 10 melhores tempos (apenas vitórias, ordenados do menor para o maior tempo) para exibir no dashboard.html
 app.get('/api/scores', async (req, res) => {
     try {
-        const result = await pool.query(
-            `SELECT username, status, tempo_segundos, criado_em
-             FROM scores
-             WHERE status = 'VITORIA'
-             ORDER BY tempo_segundos ASC, criado_em ASC
-             LIMIT 10`
-        );
-        res.status(200).json(result.rows);
+        const top10 = await Score.findAll({
+            attributes: ['username', 'status', 'tempo_segundos', 'criado_em'],
+            where: { status: 'VITORIA' },
+            order: [['tempo_segundos', 'ASC'], ['criado_em', 'ASC']],
+            limit: 10
+        });
+        res.status(200).json(top10);
     } catch (error) {
         console.error('Erro ao buscar scores:', error);
         res.status(500).json({ message: 'Erro interno ao buscar histórico.' });
