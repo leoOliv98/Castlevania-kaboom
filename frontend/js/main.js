@@ -5,9 +5,9 @@ import { cenaJogo } from "./cenas/game.js";
 kaboom({
     background: [20, 20, 30],
     width: 1280, 
-    height: 600,
-    letterbox: true, 
-    stretch: true,   
+    height: 600, 
+    root: document.querySelector("#game-container"),
+    letterbox: true,    
     scale: 1,  
 });
 
@@ -22,40 +22,6 @@ loadSprite("player", "frontend/assets/sprites/Personagem-Principal-andando.png",
         "idle": { from: 0, to: 0 }, 
         "walk": { from: 0, to: 5, speed: 12, loop: true }
     }
-});  
-loadSprite("ataque_fogo", "frontend/assets/sprites/ataque_de_fogo.png", {
-    sliceX: 2,
-    sliceY: 3,
-    anims: {
-        "idle": { from: 0, to: 0 },
-        "cast": {
-            from: 0,
-            to: 4,
-            speed: 8,
-            loop: false,
-        },
-    },
-});
-
-loadSprite("bola_fogo", "frontend/assets/sprites/bola_fogo.png", {
-    sliceX: 5,
-    sliceY: 1,
-    anims: {
-        // Bola de fogo a viajar no ar (frames 0, 1 e 2)
-        "fly": {
-            from: 0,
-            to: 2,
-            speed: 12,
-            loop: true,
-        },
-        // Explosão ao colidir (frames 3 e 4)
-        "explode": {
-            from: 3,
-            to: 4,
-            speed: 10,
-            loop: false,
-        },
-    },
 });
 
 loadSprite("player_ataque", "frontend/assets/sprites/Personagem-Principal-atacando.png", {

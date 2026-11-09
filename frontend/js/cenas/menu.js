@@ -23,23 +23,35 @@ export function cenaMenu() {
     onKeyPress("space", () => go("game", { lives: 3, level: LEVEL_PADRAO }));
 }
 
+function formatarTempo(totalSegundos = 0) {
+    const min = Math.floor(totalSegundos / 60);
+    const seg = Math.floor(totalSegundos % 60);
+    return `${String(min).padStart(2, "0")}:${String(seg).padStart(2, "0")}`;
+}
+
 export function cenaMorte(data) {
     add([ rect(width(), height()), color(0, 0, 0), pos(0, 0) ]);
-    add([ text("VOCÊ MORREU!", { size: 48 }), pos(center().x, center().y - 30), anchor("center"), color(220, 20, 20) ]);
-    add([ text(`Vidas restantes: ${data.lives}`, { size: 24 }), pos(center().x, center().y + 30), anchor("center"), color(255, 255, 255) ]);
+    add([ text("VOCÊ MORREU!", { size: 48 }), pos(center().x, center().y - 50), anchor("center"), color(220, 20, 20) ]);
+    add([ text(`Vidas restantes: ${data.lives}`, { size: 24 }), pos(center().x, center().y + 5), anchor("center"), color(255, 255, 255) ]);
+    if (data.tempo !== undefined) {
+        add([ text(`Tempo registrado: ${formatarTempo(data.tempo)}`, { size: 20 }), pos(center().x, center().y + 45), anchor("center"), color(100, 255, 218) ]);
+    }
 
     wait(2, () => {
         // Volta para a MESMA fase em que o jogador morreu
         if (data.lives > 0) go("game", { lives: data.lives, level: data.level });
-        else go("gameover");
+        else go("gameover", { tempo: data.tempo });
     });
 }
 
-export function cenaGameOver() {
+export function cenaGameOver(data = {}) {
     add([ rect(width(), height()), color(20, 5, 5), pos(0, 0) ]);
-    add([ text("GAME OVER", { size: 64 }), pos(center().x, center().y - 40), anchor("center"), color(180, 0, 0) ]);
+    add([ text("GAME OVER", { size: 64 }), pos(center().x, center().y - 50), anchor("center"), color(180, 0, 0) ]);
+    if (data.tempo !== undefined) {
+        add([ text(`Tempo registrado: ${formatarTempo(data.tempo)}`, { size: 22 }), pos(center().x, center().y + 5), anchor("center"), color(100, 255, 218) ]);
+    }
 
-    const restartText = add([ text("Pressione ENTER para voltar ao Menu", { size: 22 }), pos(center().x, center().y + 40), anchor("center"), color(200, 200, 200) ]);
+    const restartText = add([ text("Pressione ENTER para voltar ao Menu", { size: 22 }), pos(center().x, center().y + 55), anchor("center"), color(200, 200, 200) ]);
     restartText.onUpdate(() => { restartText.opacity = wave(0.3, 1, time() * 4); });
 
     onKeyPress("enter", () => go("menu"));

@@ -1,7 +1,3 @@
-
-export function criarJogador(spawnX, spawnY) {
-    let ultimaDirecao = false;
-
 import { BALANCEAMENTO } from "../balanceamento.js";
 import { criarBolaDeFogo } from "./bolasDeFogo.js";
 
@@ -18,6 +14,7 @@ function formaHitboxEstreita(escalaAtual) {
 
 export function criarJogador(spawnX, spawnY, opcoes = {}) {
     const formaInicial = opcoes.hitboxEstreita ? formaHitboxEstreita(0.35) : null;
+    let direcaoAoAtacar = false; // lado para onde o jogador estava virado ao começar o ataque
 
     const player = add([
         sprite("player"),
@@ -97,7 +94,7 @@ export function criarJogador(spawnX, spawnY, opcoes = {}) {
                 
                 add([
                     text("Voo Esgotado!", { size: 14 }),
-                    pos(player.pos.x, player.pos.y - 30),
+                    pos(player.pos.x, this.pos ? this.pos.y - 30 : player.pos.y - 30),
                     color(200, 200, 200),
                     lifespan(1, { fade: 1 })
                 ]);
@@ -133,14 +130,9 @@ export function criarJogador(spawnX, spawnY, opcoes = {}) {
     });
 
     onKeyDown("right", () => {
-<<<<<<< HEAD
-        if (player.isAttacking || player.paused) return; 
-        player.move(SPEED, 0);
-=======
         if (player.paused || player.isKnockbacked) return;
         const vel = player.isFlying ? VELOCIDADE_VOO : VELOCIDADE_BASE;
         player.move(vel, 0);
->>>>>>> 81ae065382d634c2eda9e288cce59bf644e30b3e
         player.flipX = false;
         
         // CORREÇÃO: Dispara a animação de andar se estiver no chão E NÃO ESTIVER VOANDO
@@ -196,20 +188,15 @@ export function criarJogador(spawnX, spawnY, opcoes = {}) {
         player.isAttacking = true;
 
         if (querAtacarParaBaixo) {
+            // ATAQUE PARA BAIXO (No ar ou no chão)
             player.use(sprite("player_ataque_baixo")); 
             player.play("ataque_baixo");
-<<<<<<< HEAD
-            player.scale = vec2(0.4);
-            player.flipX = estaViradoEsquerda;
-
-=======
 
             player.scale = vec2(0.4); 
             ajustarHitbox(0.4);
             player.flipX = estaViradoEsquerda;
 
             // HITBOX EXPANDIDA PARA O ATAQUE PARA BAIXO
->>>>>>> 81ae065382d634c2eda9e288cce59bf644e30b3e
             add([
                 rect(80, 60),
                 pos(player.pos.x, player.pos.y + 20), // <--- aumentado o Y para a hitbox do ataque ficar mais abaixo do jogador
@@ -220,15 +207,12 @@ export function criarJogador(spawnX, spawnY, opcoes = {}) {
                 "ataqueBaixoJogador" 
             ]);
 
-<<<<<<< HEAD
-            player.jump(500);
-=======
-            if (!player.isFlying){
-            player.jump(500);
+            if (!player.isFlying) {
+                player.jump(500);
             }
 
->>>>>>> 81ae065382d634c2eda9e288cce59bf644e30b3e
         } else {
+            // ATAQUE NORMAL (Lateral)
             player.use(sprite("player_ataque")); 
             player.play("ataque");
             player.scale = vec2(0.4); 
@@ -249,53 +233,8 @@ export function criarJogador(spawnX, spawnY, opcoes = {}) {
                 "ataqueJogador" 
             ]);
         }
-    });  
-
-    // SISTEMA DE MAGIA DE FOGO (Tecla X)
-    onKeyPress("x", () => {
-        if (player.isAttacking) return;
-
-        const estaViradoEsquerda = player.flipX;
-        player.isAttacking = true;
-
-        // Usa o sprite do ataque de fogo e inicia a animação
-        player.use(sprite("ataque_fogo"));
-        player.play("cast");
-
-        player.scale = vec2(0.4);
-        player.flipX = estaViradoEsquerda;
-
-        const offsetSpawnX = estaViradoEsquerda ? -30 : 30;
-        const direcaoProjetil = estaViradoEsquerda ? -1 : 1;
-        const velocidadeProjetil = 400;
-
-        const bolaDeFogo = add([
-            sprite("bola_fogo", { anim: "fly" }),
-            pos(player.pos.x + offsetSpawnX, player.pos.y),
-            anchor("center"),
-            area(),
-            scale(0.5),
-            move(vec2(direcaoProjetil, 0), velocidadeProjetil),
-            lifespan(1.2),
-            "ataqueFogoJogador",
-        ]);
-
-        bolaDeFogo.flipX = estaViradoEsquerda;
     });
 
-<<<<<<< HEAD
-    // FIM DE QUALQUER ANIMAÇÃO DE ATAQUE (Z ou X)
-    player.onAnimEnd((anim) => {
-        if (anim === "ataque" || anim === "ataque_baixo" || anim === "cast") {
-            player.isAttacking = false;
-            player.use(sprite("player")); // Retorna ao sprite base correto
-            player.play("idle");
-            player.scale = vec2(0.35); 
-            player.flipX = ultimaDirecao; 
-        }
-    });
-
-=======
     // BOLA DE FOGO (Tecla X): gasta mana, toca a animação de conjurar e a bola sai no quadro do disparo
     const ESCALA_CONJURAR = 0.44; // a arte do cajado tem 175px de altura (a de andar tem 220)
     let avisoManaEm = -10;
@@ -353,10 +292,7 @@ export function criarJogador(spawnX, spawnY, opcoes = {}) {
                 player.use(sprite("player_voando")); 
                 player.play("voar");
                 player.scale = vec2(0.44); 
-                
-                // --- CORREÇÃO AQUI TAMBÉM ---
                 ajustarHitbox(0.44);
-                
             } else {
                 player.use(sprite("player")); 
                 player.play("idle");
@@ -368,7 +304,5 @@ export function criarJogador(spawnX, spawnY, opcoes = {}) {
         }
     });
 
-    let direcaoAoAtacar = false; // lado para onde o jogador estava virado ao começar o ataque
->>>>>>> 81ae065382d634c2eda9e288cce59bf644e30b3e
     return player;
 }

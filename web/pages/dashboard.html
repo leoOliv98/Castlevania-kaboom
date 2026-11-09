@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard - Leaderboard</title>
+    <link rel="stylesheet" href="/css/portal.css">
+</head>
+<body>
+    <nav class="navbar">
+        <div class="nav-brand">Super Mailson</div>
+        <div class="nav-user">
+            Bem-vindo, <span id="display-username">Jogador</span>!
+            <a href="/login.html" class="btn-logout" id="btn-logout">Sair</a>
+        </div>
+    </nav>
+
+    <main class="main-content">
+        <header class="page-header">
+            <h1>Painel de Controle</h1>
+            <p>Gerencie suas sessões e acompanhe os tempos de conclusão das fases.</p>
+        </header>
+
+        <section class="game-launcher-section">
+            <a href="/play.html" class="play-square">
+                <span class="play-icon">▶</span>
+                <span class="play-text">JOGAR AGORA</span>
+            </a>
+        </section> 
+
+        <section class="user-history-section" style="margin-top: 40px;">
+            <h2>Suas Últimas 5 Partidas</h2>
+            <table class="user-history-table leaderboard-table">
+                <thead>
+                    <tr>
+                        <th>Status</th>
+                        <th>Tempo</th>
+                        <th>Data / Hora</th>
+                    </tr>
+                </thead>
+                <tbody id="user-history-tbody">
+                    <tr><td colspan="3" style="text-align: center;">Carregando seu histórico...</td></tr>
+                </tbody>
+            </table>
+        </section>
+
+        <section class="leaderboard-section">
+            <h2>Top 10 - Melhores Tempos (Speedruns)</h2>
+            <table class="leaderboard-table">
+                <thead>
+                    <tr>
+                        <th>Posição</th>
+                        <th>Jogador</th>
+                        <th>Tempo de Conclusão</th>
+                    </tr>
+                </thead>
+                <tbody id="leaderboard-tbody">
+                    <!-- Os dados do banco serão inseridos aqui dinamicamente pelo script -->
+                    <tr><td colspan="3" style="text-align: center;">Carregando ranking...</td></tr>
+                </tbody>
+            </table>
+        </section>
+    </main>
+
+    <!-- Script principal de autenticação e carregamento do leaderboard -->
+    <script src="/js/portal-auth.js"></script>
+</body>
+</html>

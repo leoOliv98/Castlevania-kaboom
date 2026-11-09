@@ -1,0 +1,29 @@
+HTML
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <title>Meu Site - Jogo</title>
+    <link rel="stylesheet" href="/css/portal.css">
+    <link rel="stylesheet" href="/css/game-container.css">
+</head>
+<body>
+    <!-- Outros elementos do seu site (Header, Navbar, etc) -->
+    <header>
+        <h1>Plataforma de Jogos</h1>
+    </header>
+
+    <main class="content-container">
+        <section class="game-section">
+            <h2>Nosso Jogo Castlevania</h2>
+            
+            <!-- Aqui é onde o Kaboom vai desenhar o jogo -->
+            <div id="game-container"></div>
+            
+        </section>
+    </main>
+
+    <!-- Importa o script do jogo que inicializa o Kaboom -->
+    <script type="module" src="/frontend/js/main.js"></script>
+</body>
+</html>

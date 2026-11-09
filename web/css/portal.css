@@ -1,0 +1,337 @@
+/* =========================================
+   IMPORTAÇÃO DE FONTES RPG (Google Fonts)
+   Cinzel: Para Títulos e Botões (Estilo Épico/Medieval)
+   Crimson Text: Para textos de leitura (Estilo Pergaminho/Grimório)
+   ========================================= */
+@import url('https://fonts.googleapis.com/css2?family=Cinzel:wght@500;700&family=Crimson+Text:ital,wght@0,400;0,600;1,400&display=swap');
+
+:root {
+    /* Paleta de Cores RPG Dark */
+    --bg-dark: #0a0a0c;         /* Fundo escuro profundo */
+    --surface-color: #161513;   /* Fundo dos painéis (pedra escura) */
+    --gold: #c2a353;            /* Ouro envelhecido principal */
+    --gold-light: #e8d08b;      /* Ouro brilhante para hovers */
+    --blood-red: #7a1717;       /* Vermelho poção de vida / ação */
+    --blood-red-hover: #a11f1f;
+    --text-main: #d3cbb8;       /* Cor de pergaminho para textos */
+    --text-muted: #8c8577;      /* Textos secundários */
+    --border-style: 2px solid var(--gold);
+}
+
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    background-color: var(--bg-dark);
+    /* Fundo com gradiente radial para simular iluminação de tocha/masmorra */
+    background-image: radial-gradient(circle at 50% 30%, #1c1a17 0%, #0a0a0c 80%);
+    color: var(--text-main);
+    font-family: 'Crimson Text', serif;
+    font-size: 1.1rem;
+    display: flex;
+    flex-direction: column;
+    min-height: 100vh;
+}
+
+h1, h2, h3, .nav-brand {
+    font-family: 'Cinzel', serif;
+    color: var(--gold);
+    text-shadow: 0 2px 4px rgba(0, 0, 0, 0.8);
+    font-weight: 700;
+}
+
+/* =========================================
+   Estilos das Telas de Login e Registro
+   ========================================= */
+.login-container {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    flex: 1;
+    padding: 2rem;
+}
+
+.login-box {
+    background: linear-gradient(135deg, #1c1a18, #0f0e0d);
+    padding: 2.5rem 3rem;
+    border: var(--border-style);
+    border-radius: 4px;
+    box-shadow: 0 0 20px rgba(194, 163, 83, 0.15), inset 0 0 30px rgba(0, 0, 0, 0.8);
+    width: 100%;
+    max-width: 420px;
+}
+
+.login-box h2 {
+    text-align: center;
+    margin-bottom: 2rem;
+    font-size: 1.8rem;
+    letter-spacing: 2px;
+    border-bottom: 1px solid rgba(194, 163, 83, 0.3);
+    padding-bottom: 1rem;
+}
+
+.input-group {
+    margin-bottom: 1.5rem;
+    display: flex;
+    flex-direction: column;
+}
+
+.input-group label {
+    margin-bottom: 0.3rem;
+    font-size: 1rem;
+    color: var(--text-muted);
+    font-family: 'Cinzel', serif;
+    letter-spacing: 1px;
+}
+
+.input-group input {
+    padding: 0.8rem;
+    border: 1px solid #333;
+    border-bottom: 2px solid var(--gold);
+    background-color: rgba(0, 0, 0, 0.6);
+    color: var(--gold-light);
+    font-family: 'Crimson Text', serif;
+    font-size: 1.1rem;
+    outline: none;
+    transition: all 0.3s ease;
+}
+
+.input-group input::placeholder {
+    color: #555;
+    font-style: italic;
+}
+
+.input-group input:focus {
+    border-color: var(--gold-light);
+    background-color: rgba(20, 20, 20, 0.9);
+    box-shadow: 0 5px 15px rgba(194, 163, 83, 0.1);
+}
+
+.btn-login {
+    width: 100%;
+    padding: 0.8rem;
+    background: linear-gradient(to bottom, var(--blood-red), #4a0c0c);
+    color: var(--gold-light);
+    border: 1px solid var(--gold);
+    border-radius: 2px;
+    font-family: 'Cinzel', serif;
+    font-weight: 700;
+    font-size: 1.2rem;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.6);
+    margin-top: 1rem;
+}
+
+.btn-login:hover {
+    background: linear-gradient(to bottom, var(--blood-red-hover), var(--blood-red));
+    box-shadow: 0 0 15px rgba(122, 23, 23, 0.8), 0 0 5px var(--gold);
+    color: #fff;
+    text-shadow: 0 0 5px rgba(255, 255, 255, 0.5);
+}
+
+.register-link {
+    text-align: center;
+    margin-top: 1.5rem;
+    font-size: 1rem;
+}
+
+.register-link a {
+    color: var(--gold);
+    text-decoration: none;
+    font-weight: 600;
+    transition: color 0.3s;
+}
+
+.register-link a:hover {
+    color: var(--gold-light);
+    text-shadow: 0 0 8px rgba(232, 208, 139, 0.5);
+}
+
+/* =========================================
+   Estilos da Página Principal (dashboard.html)
+   ========================================= */
+.navbar {
+    background-color: var(--surface-color);
+    padding: 1rem 2rem;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border-bottom: 2px solid #332b1a;
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.5);
+}
+
+.nav-brand {
+    font-size: 1.6rem;
+    letter-spacing: 2px;
+}
+
+.nav-user {
+    font-family: 'Cinzel', serif;
+    color: var(--text-main);
+}
+
+#display-username {
+    color: var(--gold-light);
+    font-weight: 700;
+}
+
+.btn-logout {
+    margin-left: 1.5rem;
+    color: var(--text-main);
+    text-decoration: none;
+    font-size: 0.9rem;
+    padding: 0.4rem 1rem;
+    border: 1px solid var(--blood-red);
+    background-color: rgba(122, 23, 23, 0.2);
+    border-radius: 2px;
+    font-family: 'Cinzel', serif;
+    transition: 0.3s;
+}
+
+.btn-logout:hover {
+    background-color: var(--blood-red);
+    color: var(--gold-light);
+    box-shadow: 0 0 10px rgba(122, 23, 23, 0.6);
+}
+
+.main-content {
+    padding: 3rem 2rem;
+    max-width: 1000px;
+    margin: 0 auto;
+    width: 100%;
+}
+
+.page-header {
+    margin-bottom: 3rem;
+    text-align: center;
+}
+
+.page-header h1 {
+    font-size: 2.5rem;
+    margin-bottom: 0.5rem;
+    letter-spacing: 3px;
+}
+
+.page-header p {
+    color: var(--text-muted);
+    font-style: italic;
+    font-size: 1.2rem;
+}
+
+/* =========================================
+   O Botão Quadrado "Jogar" (Estilo Portal/Runa)
+   ========================================= */
+.game-launcher-section {
+    display: flex;
+    justify-content: center;
+    margin-bottom: 4rem;
+}
+
+.play-square {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    width: 240px;
+    height: 240px;
+    background: radial-gradient(circle at center, #2e2614, #0f0e0d);
+    color: var(--gold);
+    text-decoration: none;
+    border: 2px solid var(--gold);
+    border-radius: 8px;
+    position: relative;
+    overflow: hidden;
+    transition: all 0.4s ease;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.8), inset 0 0 20px rgba(194, 163, 83, 0.1);
+}
+
+.play-square:hover {
+    transform: translateY(-5px) scale(1.02);
+    border-color: var(--gold-light);
+    background: radial-gradient(circle at center, #3d331b, #171513);
+    box-shadow: 0 15px 40px rgba(194, 163, 83, 0.3), inset 0 0 40px rgba(194, 163, 83, 0.3);
+    color: var(--gold-light);
+}
+
+.play-icon {
+    font-size: 4.5rem;
+    margin-bottom: 1rem;
+    line-height: 1;
+    filter: drop-shadow(0 0 8px rgba(194, 163, 83, 0.6));
+    transition: filter 0.3s;
+}
+
+.play-square:hover .play-icon {
+    filter: drop-shadow(0 0 15px var(--gold-light));
+}
+
+.play-text {
+    font-family: 'Cinzel', serif;
+    font-size: 1.5rem;
+    font-weight: 700;
+    letter-spacing: 2px;
+    text-shadow: 0 2px 5px rgba(0, 0, 0, 0.9);
+}
+
+/* =========================================
+   Leaderboard (Estilo Quadro de Missões/Guilda)
+   ========================================= */
+.user-history-section {
+    margin-bottom: 4rem;
+}
+
+.leaderboard-section h2,
+.user-history-section h2 {
+    margin-bottom: 1.5rem;
+    text-align: center;
+    font-size: 1.8rem;
+    border-bottom: 1px solid rgba(194, 163, 83, 0.3);
+    padding-bottom: 1rem;
+}
+
+.leaderboard-table {
+    width: 100%;
+    border-collapse: collapse;
+    background-color: rgba(22, 21, 19, 0.85);
+    border: 1px solid #332b1a;
+    box-shadow: 0 10px 20px rgba(0,0,0,0.5);
+}
+
+.leaderboard-table th, .leaderboard-table td {
+    padding: 1.2rem;
+    text-align: left;
+}
+
+.leaderboard-table th {
+    background-color: #1a1713;
+    color: var(--gold);
+    font-family: 'Cinzel', serif;
+    font-size: 1.1rem;
+    letter-spacing: 1px;
+    border-bottom: 2px solid var(--gold);
+}
+
+.leaderboard-table td {
+    border-bottom: 1px solid #2a241a;
+    font-size: 1.15rem;
+}
+
+.leaderboard-table tbody tr {
+    transition: background-color 0.2s;
+}
+
+.leaderboard-table tbody tr:hover {
+    background-color: rgba(194, 163, 83, 0.08);
+}
+
+.leaderboard-table tbody tr:nth-child(1) td {
+    color: var(--gold-light);
+    font-weight: 600;
+    text-shadow: 0 0 5px rgba(194, 163, 83, 0.4);
+}
