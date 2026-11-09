@@ -8,6 +8,7 @@ import { LEVELS, LEVEL_PADRAO } from "../levels.js";
 import { carregarMapa } from "../mapa.js";
 import { BALANCEAMENTO } from "../balanceamento.js";
 import { ITENS } from "../itens.js";
+import { flutuar, rotulo, avisoCentral, criarBarraChefe, CORES, FONTE_TITULO, FONTE_TEXTO } from "../ui.js";
 
 export async function cenaJogo(data = { lives: 3 }) {
     setGravity(2400);
@@ -32,46 +33,24 @@ export async function cenaJogo(data = { lives: 3 }) {
         loop: true     // Mantém a música repetindo em loop contínuo
     });
 
-    // Criação dos elementos de pausa individualmente com .fixed() e .anchor("center")
-    // Usamos o centro absoluto da tela com center()
-    const fundoPause = add([
-        rect(width(), height()),
-        color(10, 10, 15),
-        opacity(0.85),
-        fixed(),
-        z(900)
-    ]);
-    fundoPause.hidden = true; // Oculta logo após criar
-
-    const tituloPause = add([
-        text("JOGO PAUSADO", { size: 48 }),
-        pos(center().x, center().y - 100),
-        anchor("center"),
-        color(220, 220, 220),
-        fixed(),
-        z(901)
-    ]);
-    tituloPause.hidden = true;
-
-    const btnResume = add([
-        text("▶ Pressione [ ESC ] para Retornar", { size: 22 }),
-        pos(center().x, center().y - 10),
-        anchor("center"),
-        color(100, 255, 100),
-        fixed(),
-        z(901)
-    ]);
-    btnResume.hidden = true;
-
-    const btnMenu = add([
-        text("🏠 Pressione [ M ] para ir ao Menu", { size: 22 }),
-        pos(center().x, center().y + 40),
-        anchor("center"),
-        color(255, 100, 100),
-        fixed(),
-        z(901)
-    ]);
-    btnMenu.hidden = true
+    // Menu de pausa: escurece a tela e mostra um painel (tudo fixo na tela, acima do jogo).
+    // "elementosPausa" guarda tudo o que aparece/some junto (cada texto com a sombra dele).
+    const cxP = center().x, cyP = center().y;
+    const elementosPausa = [
+        add([ rect(width(), height()), color(5, 3, 8), opacity(0.78), fixed(), z(900) ]),
+        add([ rect(560, 290), pos(cxP, cyP), anchor("center"), color(14, 8, 10), opacity(0.94), fixed(), z(900) ]),
+        add([ rect(560, 290), pos(cxP, cyP), anchor("center"), outline(3, rgb(...CORES.brasa)), opacity(0), fixed(), z(901) ]),
+        add([ rect(300, 3), pos(cxP, cyP - 45), anchor("center"), color(...CORES.brasa), opacity(0.85), fixed(), z(901) ]),
+    ];
+    const textoPausa = (str, y, tam, cor, fonte = FONTE_TEXTO, ancora = "center", x = cxP) =>
+        elementosPausa.push(...rotulo(str, { x, y, tam, cor, fonte, ancora, fixo: true, z: 901 }).todos);
+    textoPausa("PAUSADO", cyP - 95, 64, CORES.ouro, FONTE_TITULO);
+    textoPausa("ESC", cyP + 5, 28, CORES.ouro, FONTE_TEXTO, "right", cxP - 20);
+    textoPausa("Continuar", cyP + 5, 26, [255, 255, 255], FONTE_TEXTO, "left", cxP + 4);
+    textoPausa("M", cyP + 55, 28, CORES.sangue, FONTE_TEXTO, "right", cxP - 20);
+    textoPausa("Voltar ao menu", cyP + 55, 26, [255, 255, 255], FONTE_TEXTO, "left", cxP + 4);
+    textoPausa("Seu progresso na fase será perdido", cyP + 105, 16, CORES.cinza);
+    elementosPausa.forEach(e => { e.hidden = true; });
 
     // Função para alternar o estado de pausa (Corrigida para pausar também a música de fundo)
     // Função para alternar o estado de pausa (Atualizada para incluir o Boss e os Projéteis)
@@ -79,10 +58,7 @@ export async function cenaJogo(data = { lives: 3 }) {
         isPaused = !isPaused;
 
         // Alterna a visibilidade dos elementos de pausa
-        fundoPause.hidden = !isPaused;
-        tituloPause.hidden = !isPaused;
-        btnResume.hidden = !isPaused;
-        btnMenu.hidden = !isPaused;
+        elementosPausa.forEach(e => { e.hidden = !isPaused; });
 
         if (isPaused) {
             player.paused = true;
@@ -155,15 +131,11 @@ export async function cenaJogo(data = { lives: 3 }) {
                 currentHp = Math.min(maxHp, currentHp + 40); 
                 hpBar.width = (currentHp / maxHp) * 160; 
 
-                add([
-                    text("+40", { size: 16 }),
-                    pos(player.pos.x, player.pos.y - 40),
-                    color(50, 255, 50),
-                    lifespan(1, { fade: 1 })
-                ]);
+                flutuar("+40", player.pos.x, player.pos.y - 40, [50, 255, 50], 16, 1);
                 
                 sistemaInventario.removerItemAtual();
                 atualizarHUDInventario();
+                play("item_usado", { volume: 0.7 });
             }
         } else if (item.tipo === "voo") {
             // Chama a função de voo passando o tempo (10 segundos)
@@ -172,38 +144,24 @@ export async function cenaJogo(data = { lives: 3 }) {
             // Consome o item e atualiza o HUD
             sistemaInventario.removerItemAtual();
             atualizarHUDInventario();
+            play("item_usado", { volume: 0.7 });
         } else if (item.tipo === "mana") {
             // Só gasta a poção se faltar mana; ela recupera TODA a mana
             if (player.mana < player.manaMax) {
                 player.mana = player.manaMax;
 
-                add([
-                    text("MANA CHEIA!", { size: 16 }),
-                    pos(player.pos.x, player.pos.y - 40),
-                    color(90, 160, 255),
-                    lifespan(1, { fade: 1 })
-                ]);
+                flutuar("MANA CHEIA!", player.pos.x, player.pos.y - 40, [90, 160, 255], 16, 1);
 
                 sistemaInventario.removerItemAtual();
                 atualizarHUDInventario();
+                play("item_usado", { volume: 0.7 });
             }
         } else if (item.tipo === "chave") {
             // A chave não se "usa" daqui: ela é gasta sozinha quando o jogador encosta na saída da fase
-            add([
-                text("Leve a chave até a saída", { size: 14 }),
-                pos(player.pos.x, player.pos.y - 40),
-                anchor("center"),
-                color(255, 220, 100),
-                lifespan(1.2, { fade: 1.2 })
-            ]);
+            flutuar("Leve a chave até a saída", player.pos.x, player.pos.y - 40, [255, 220, 100], 14, 1.2);
         } else {
             player.gravityScale = 1; // Restaura a gravidade alterando a propriedade
-            add([
-                text("Voo Desativado", { size: 14 }),
-                pos(player.pos.x, player.pos.y - 30),
-                color(200, 200, 200),
-                lifespan(1, { fade: 1 })
-            ]);
+            flutuar("Voo Desativado", player.pos.x, player.pos.y - 30, [200, 200, 200], 14, 1);
         }
     });
 
@@ -265,16 +223,8 @@ export async function cenaJogo(data = { lives: 3 }) {
     mapa.spawnsGuardioes.forEach(spawn => {
         const guardiao = criarGuardiao(spawn.x, spawn.y);
         guardiao.on("morreu", () => {
-            barraGuardiaoAtiva = false;
-            [guardBarBg, guardBarBack, guardHpBar, guardMarca, guardTexto].forEach(e => { e.hidden = true; });
-            add([
-                text("GUARDIÃO DERROTADO!", { size: 28 }),
-                pos(center().x, center().y - 200),
-                anchor("center"),
-                color(100, 255, 100),
-                fixed(),
-                lifespan(4, { fade: 1 })
-            ]);
+            barraGuardiao.esconder();
+            avisoCentral("GUARDIÃO DERROTADO!", [120, 255, 120], 40, center().y - 200, 3);
         });
     });
 
@@ -295,13 +245,6 @@ export async function cenaJogo(data = { lives: 3 }) {
     }
     mapa.itens.forEach(item => criarItem(item.id, item.x, item.y));
 
-    // Levels de teste que ainda não têm itens no Tiled (levels.js: itensDeTeste) soltam os três itens ao lado do jogador
-    if (level.itensDeTeste) {
-        criarItem("pocao-vida", spawnPlayerX + 80, spawnPlayerY);
-        criarItem("asas", spawnPlayerX + 160, spawnPlayerY);
-        criarItem("pocao-mana", spawnPlayerX + 240, spawnPlayerY);
-    }
-
     // Saída da fase: o retângulo "fim-level" do Tiled (invisível). Ver player.onCollideUpdate("fimLevel") mais abaixo.
     if (mapa.fimLevel) {
         add([
@@ -317,12 +260,12 @@ export async function cenaJogo(data = { lives: 3 }) {
     add([ rect(320, 90), pos(15, 15), color(0, 0, 0), opacity(0.6), fixed(), z(100) ]);
     add([ rect(164, 20), pos(25, 25), color(80, 80, 80), fixed(), z(101) ]);
     const hpBar = add([ rect(160, 16), pos(27, 27), color(220, 40, 40), fixed(), z(102) ]);
-    add([ text(`VIDAS: ${currentLives}`, { size: 18 }), pos(25, 55), color(255, 215, 0), fixed(), z(101) ]);
+    add([ text(`VIDAS: ${currentLives}`, { size: 20, font: FONTE_TEXTO }), pos(25, 52), color(255, 215, 0), fixed(), z(101) ]);
 
     // Barra de mana (azul) logo abaixo das vidas + quantas bolas de fogo ainda dá para lançar
     add([ rect(164, 16), pos(25, 76), color(40, 40, 80), fixed(), z(101) ]);
     const manaBar = add([ rect(160, 12), pos(27, 78), color(70, 140, 255), fixed(), z(102) ]);
-    const manaTexto = add([ text("", { size: 11 }), pos(192, 77), color(150, 190, 255), fixed(), z(102) ]);
+    const manaTexto = add([ text("", { size: 13, font: FONTE_TEXTO }), pos(192, 77), color(150, 190, 255), fixed(), z(102) ]);
     let ultimaManaExibida = -1;
     onUpdate(() => {
         if (player.mana === ultimaManaExibida) return;
@@ -332,7 +275,7 @@ export async function cenaJogo(data = { lives: 3 }) {
     });
 
     add([ rect(50, 50), pos(240, 25), color(40, 40, 50), outline(2, rgb(200, 200, 200)), fixed(), z(101) ]);
-    add([ text("ITEM", { size: 10 }), pos(265, 30), anchor("center"), color(150, 150, 150), fixed(), z(102) ]);
+    add([ text("ITEM", { size: 12, font: FONTE_TEXTO }), pos(265, 30), anchor("center"), color(150, 150, 150), fixed(), z(102) ]);
 
     // CRIAMOS UM SPRITE PLACEHOLDER INICIALMENTE INVISÍVEL OU VAZIO NA HUD
     let hudItemSprite = add([
@@ -358,76 +301,51 @@ export async function cenaJogo(data = { lives: 3 }) {
         }
     }
 
-    // --- HUD DA BARRA DE VIDA DO LICH (Inicialmente Oculta) ---
-    const larguraBarraBoss = 400;
-    
-    // Fundo da barra do chefe (centralizada no topo da tela)
-    const bossBarBg = add([ 
-        rect(larguraBarraBoss + 8, 24), 
-        pos(width() / 2, 35), 
-        anchor("center"),
-        color(0, 0, 0), 
-        opacity(0.7), 
-        fixed(), 
-        z(100) 
-    ]);
-    bossBarBg.hidden = true;
-
-    // Parte cinza de fundo da vida
-    const bossBarBack = add([ 
-        rect(larguraBarraBoss, 16), 
-        pos(width() / 2, 35), 
-        anchor("center"),
-        color(80, 20, 20), 
-        fixed(), 
-        z(101) 
-    ]);
-    bossBarBack.hidden = true;
-
-    // Parte vermelha dinâmica da vida do Lich
-    const bossHpBar = add([ 
-        rect(larguraBarraBoss, 16), 
-        pos(width() / 2 - larguraBarraBoss / 2, 35), // Alinhada à esquerda da barra
-        color(220, 40, 40), 
-        fixed(), 
-        z(102) 
-    ]);
-    bossHpBar.hidden = true;
-
-    // Nome do Chefe
-    const bossText = add([ 
-        text("LICH - O CHEFE", { size: 14 }), 
-        pos(width() / 2, 18), 
-        anchor("center"), 
-        color(255, 255, 255), 
-        fixed(), 
-        z(103) 
-    ]);
-    bossText.hidden = true;
-
-    let barraBossAtiva = false; // Controla se o chefe já recebeu o primeiro golpe
-
-    // --- HUD DA BARRA DE VIDA DO GUARDIÃO (aparece no primeiro golpe; o risco branco marca os 50% da fase 2) ---
-    const larguraBarraGuardiao = 400;
-    const guardBarBg = add([ rect(larguraBarraGuardiao + 8, 24), pos(width() / 2, 35), anchor("center"), color(0, 0, 0), opacity(0.7), fixed(), z(100) ]);
-    const guardBarBack = add([ rect(larguraBarraGuardiao, 16), pos(width() / 2, 35), anchor("center"), color(60, 30, 80), fixed(), z(101) ]);
-    const guardHpBar = add([ rect(larguraBarraGuardiao, 16), pos(width() / 2 - larguraBarraGuardiao / 2, 27), color(150, 60, 220), fixed(), z(102) ]);
-    const guardMarca = add([ rect(2, 16), pos(width() / 2, 27), color(255, 255, 255), opacity(0.8), fixed(), z(103) ]);
-    const guardTexto = add([ text("GUARDIÃO MASCARADO", { size: 14 }), pos(width() / 2, 18), anchor("center"), color(255, 255, 255), fixed(), z(103) ]);
-    [guardBarBg, guardBarBack, guardHpBar, guardMarca, guardTexto].forEach(e => { e.hidden = true; });
-    let barraGuardiaoAtiva = false;
+    // --- BARRAS DE VIDA DOS CHEFES (topo da tela; aparecem no primeiro golpe) ---
+    const barraLich = criarBarraChefe({ nome: "LICH - O CHEFE", corFundo: [20, 55, 55], corBarra: [70, 210, 170] });
+    // No Guardião, o risco branco marca os 50% em que ele perde a máscara (fase 2)
+    const barraGuardiao = criarBarraChefe({ nome: "GUARDIÃO MASCARADO", corFundo: [60, 30, 80], corBarra: [150, 60, 220], marcaEm: 0.5 });
 
     function danificarGuardiao(guardiao, dano, direcao) {
         if (guardiao.morto) return;
         guardiao.receberDano(dano, direcao);
-        guardHpBar.width = (guardiao.hp / guardiao.maxHp) * larguraBarraGuardiao;
-        if (!barraGuardiaoAtiva && !guardiao.morto) {
-            barraGuardiaoAtiva = true;
-            [guardBarBg, guardBarBack, guardHpBar, guardMarca, guardTexto].forEach(e => { e.hidden = false; });
-        }
+        barraGuardiao.definir(guardiao.hp / guardiao.maxHp);
+        if (!guardiao.morto) barraGuardiao.mostrar();
+    }
+
+    // Vitória: derrotar o Lich num level com "fimAoDerrotarLich" (levels.js) destrói os esqueletos e abre a tela de vitória
+    let jogoEncerrado = false;
+    function encerrarJogoPorVitoria() {
+        if (jogoEncerrado) return;
+        jogoEncerrado = true;
+        player.isInvulnerable = true;   // nada machuca o jogador no final
+
+        // limpa tudo o que ainda pode causar dano
+        get("projetilLich").forEach(p => { if (p.somLoop) p.somLoop.paused = true; destroy(p); });
+        get("raioLich").forEach(r => destroy(r));
+        get("avisoRaio").forEach(a => destroy(a));
+        get("ataqueInimigo").forEach(a => destroy(a));
+
+        // os esqueletos (inclusive as pilhas de ossos) explodem um depois do outro
+        const inimigos = get("enemy");
+        const passo = Math.min(0.12, 1.2 / Math.max(1, inimigos.length));
+        inimigos.forEach((e, i) => {
+            wait(passo * i, () => {
+                if (!e.exists()) return;
+                play("som_quebrar", { volume: 0.4 });
+                criarExplosaoAzul(e.pos);
+                destroy(e);
+            });
+        });
+
+        wait(passo * inimigos.length + 2, () => {
+            musicaFase.paused = true;
+            go("vitoria", { lives: currentLives, level: idLevel });
+        });
     }
 
     function triggerDeath() {
+        if (jogoEncerrado) return;
         if (musicaFase) {
             musicaFase.paused = true;
         }
@@ -505,6 +423,7 @@ export async function cenaJogo(data = { lives: 3 }) {
         if (pegou) {
             destroy(item);
             atualizarHUDInventario(); 
+            play("item_pego", { volume: 0.7 });
         }
     }); 
 
@@ -521,34 +440,21 @@ export async function cenaJogo(data = { lives: 3 }) {
         atualizarHUDInventario();
     }
     player.onCollideUpdate("fimLevel", (saida) => {
-        if (faseConcluida) return;
+        if (faseConcluida || jogoEncerrado) return;
 
         if (level.exigeChave && !temChave()) {
             if (time() - ultimoAvisoSaida > 1.5) {
                 ultimoAvisoSaida = time();
-                add([
-                    text("Precisa da chave!", { size: 16 }),
-                    pos(saida.pos.x + saida.width / 2, saida.pos.y - 20),
-                    anchor("center"),
-                    color(255, 120, 120),
-                    lifespan(1.2, { fade: 1.2 })
-                ]);
+                flutuar("Precisa da chave!", saida.pos.x + saida.width / 2, saida.pos.y - 20, [255, 120, 120], 16, 1.2);
             }
             return;
         }
 
         faseConcluida = true;
-        if (level.exigeChave) gastarChave();
+        if (level.exigeChave) { gastarChave(); play("item_usado", { volume: 0.7 }); }
         player.paused = true;
         if (musicaFase) musicaFase.paused = true;
-        add([
-            text("FASE CONCLUÍDA!", { size: 36 }),
-            pos(center().x, center().y - 100),
-            anchor("center"),
-            color(100, 255, 100),
-            fixed(),
-            z(900)
-        ]);
+        avisoCentral("FASE CONCLUÍDA!", [120, 255, 120], 56);
         wait(2, () => {
             if (level.proximoLevel) go("game", { lives: currentLives, level: level.proximoLevel });
             else go("menu");
@@ -598,12 +504,7 @@ export async function cenaJogo(data = { lives: 3 }) {
                 }
             });
 
-            add([
-                text(`-${dano}`, { size: 14 }),
-                pos(enemy.pos.x, enemy.pos.y - 40),
-                color(255, 255, 0),
-                lifespan(0.4, { fade: 0.4 })
-            ]);
+            flutuar(`-${dano}`, enemy.pos.x, enemy.pos.y - 40, [255, 255, 0], 14, 0.4);
             return;
         }
 
@@ -629,12 +530,7 @@ export async function cenaJogo(data = { lives: 3 }) {
             collisionIgnore: ["player", "enemy"] 
         }));
         
-        add([
-            text("CRACK!", { size: 12 }),
-            pos(enemy.pos.x, enemy.pos.y - 20),
-            color(200, 200, 200),
-            lifespan(0.5, { fade: 0.5 })
-        ]);
+        flutuar("CRACK!", enemy.pos.x, enemy.pos.y - 20, [200, 200, 200], 12, 0.5);
 
         // TEMPORIZADOR INTELIGENTE: Usamos uma variável e o onUpdate em vez do wait() global
         enemy.tempoRespawn = 10;
@@ -663,12 +559,7 @@ export async function cenaJogo(data = { lives: 3 }) {
                         collisionIgnore: [] 
                     })); 
                     
-                    add([
-                        text("REVIVEU!", { size: 10 }),
-                        pos(enemy.pos.x, enemy.pos.y - 30),
-                        color(200, 50, 50),
-                        lifespan(0.5, { fade: 0.5 })
-                    ]);
+                    flutuar("REVIVEU!", enemy.pos.x, enemy.pos.y - 30, [200, 50, 50], 10, 0.5);
                 }
                 // Encerra esse cronômetro para ele não continuar rodando em loop
                 controleRespawn.cancel();
@@ -696,23 +587,13 @@ export async function cenaJogo(data = { lives: 3 }) {
                 }
             });
 
-            add([
-                text(`-${dano}`, { size: 14 }),
-                pos(lobo.pos.x, lobo.pos.y - 40),
-                color(255, 255, 0),
-                lifespan(0.4, { fade: 0.4 })
-            ]);
+            flutuar(`-${dano}`, lobo.pos.x, lobo.pos.y - 40, [255, 255, 0], 14, 0.4);
             return;
         }
 
         // A vida chegou a zero: empurra para trás e aciona a morte
         lobo.pos.x += dirEmpurrao * 15; 
-        add([
-            text(`-${dano}`, { size: 14 }),
-            pos(lobo.pos.x, lobo.pos.y - 40),
-            color(255, 50, 50),
-            lifespan(0.5, { fade: 0.5 })
-        ]);
+        flutuar(`-${dano}`, lobo.pos.x, lobo.pos.y - 40, [255, 50, 50], 14, 0.5);
     
         // Isso dispara o evento lobo.on("death") criado no lobos.js
         lobo.trigger("death"); 
@@ -781,12 +662,7 @@ export async function cenaJogo(data = { lives: 3 }) {
         corvo.explodir();  // O corvo morre instantaneamente (1 hit)
         
         // Opcional: Feedback visual do acerto
-        add([
-            text("HIT!", { size: 12 }),
-            pos(corvo.pos.x, corvo.pos.y - 20),
-            color(255, 150, 50),
-            lifespan(0.4, { fade: 0.4 })
-        ]);
+        flutuar("HIT!", corvo.pos.x, corvo.pos.y - 20, [255, 150, 50], 12, 0.4);
     });
 
     // Espada (Ataque lateral) vs Corvo
@@ -794,12 +670,7 @@ export async function cenaJogo(data = { lives: 3 }) {
         if (!corvo.ativo || corvo.explodindo) return;
         corvo.explodir();
         
-        add([
-            text("HIT!", { size: 12 }),
-            pos(corvo.pos.x, corvo.pos.y - 20),
-            color(255, 150, 50),
-            lifespan(0.4, { fade: 0.4 })
-        ]);
+        flutuar("HIT!", corvo.pos.x, corvo.pos.y - 20, [255, 150, 50], 12, 0.4);
     });
 
     // Espada (Ataque para baixo) vs Corvo
@@ -807,12 +678,7 @@ export async function cenaJogo(data = { lives: 3 }) {
         if (!corvo.ativo || corvo.explodindo) return;
         corvo.explodir();
         
-        add([
-            text("HIT!", { size: 12 }),
-            pos(corvo.pos.x, corvo.pos.y - 20),
-            color(255, 150, 50),
-            lifespan(0.4, { fade: 0.4 })
-        ]);
+        flutuar("HIT!", corvo.pos.x, corvo.pos.y - 20, [255, 150, 50], 12, 0.4);
     });
 
     // Ataque lateral da espada vs Lich
@@ -878,28 +744,17 @@ export async function cenaJogo(data = { lives: 3 }) {
         boss.pos.y -= 10;                      // Dá um pequeno tranco para cima
 
         // Se for o primeiro golpe, revela a barra de vida no topo da tela!
-        if (!barraBossAtiva) {
-            barraBossAtiva = true;
-            bossBarBg.hidden = false;
-            bossBarBack.hidden = false;
-            bossHpBar.hidden = false;
-            bossText.hidden = false;
-        }
+        barraLich.mostrar();
 
         boss.hp = Math.max(0, boss.hp - dano); // Tira a vida conforme o ataque
         
         // Atualiza a largura visual da barra vermelha proporcionalmente
-        bossHpBar.width = (boss.hp / boss.maxHp) * larguraBarraBoss;
+        barraLich.definir(boss.hp / boss.maxHp);
 
         // Efeitinho de texto de dano
-        add([
-            text(`-${dano}`, { size: 14 }),
-            pos(boss.pos.x, boss.pos.y - 40),
-            color(255, 255, 0),
-            lifespan(0.4, { fade: 0.4 })
-        ]);
+        flutuar(`-${dano}`, boss.pos.x, boss.pos.y - 40, [255, 255, 0], 14, 0.4);
 
-        // Se a vida chegar a zero (6º golpe), o Lich morre!
+        // Se a vida chegar a zero, o Lich morre!
         if (boss.hp <= 0) {
             boss.isDead = true;
 
@@ -909,20 +764,13 @@ export async function cenaJogo(data = { lives: 3 }) {
             destroy(boss);
 
             // Esconde a barra de vida após derrotá-lo
-            bossBarBg.hidden = true;
-            bossBarBack.hidden = true;
-            bossHpBar.hidden = true;
-            bossText.hidden = true;
+            barraLich.esconder();
 
             // Mensagem de vitória do chefe centralizada na tela do jogador
-            add([
-                text("CHEFE DERROTADO!", { size: 28 }),
-                pos(center().x, center().y - 200),
-                anchor("center"),
-                color(100, 255, 100),
-                fixed(), // <--- ADICIONADO AQUI: Trava o texto na tela independente da câmera!
-                lifespan(4, { fade: 1 }) // (Opcional: Ajustei o tempo para 4 segundos para sumir depois de um tempo legal)
-            ]);
+            avisoCentral("CHEFE DERROTADO!", [120, 255, 120], 40, center().y - 200, 3);
+
+            // Nos levels em que o Lich é o chefe final (levels.js: fimAoDerrotarLich) o jogo termina aqui
+            if (level.fimAoDerrotarLich) encerrarJogoPorVitoria();
         }
     }
 

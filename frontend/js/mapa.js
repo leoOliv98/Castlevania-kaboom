@@ -168,9 +168,7 @@ export async function carregarMapa(level) {
     const larguraTotalMapa = json.width * json.tilewidth * escala;
     const alturaTotalMapa = json.height * json.tileheight * escala;
 
-    if (level.tipo === "tiles-individuais") {
-        construirTilesIndividuais(json, level, escala);
-    } else if (level.tipo === "tileset") {
+    if (level.tipo === "tileset") {
         await construirTileset(json, level, escala);
     } else {
         throw new Error(`Tipo de level desconhecido em levels.js: "${level.tipo}"`);
@@ -231,42 +229,7 @@ function lerObjetos(json, level, escala) {
 }
 
 // ---------------------------------------------------------------------------
-// Tipo "tiles-individuais" (level-1): comportamento original, um objeto por tile
-// ---------------------------------------------------------------------------
-
-function construirTilesIndividuais(json, level, escala) {
-    const tileW = json.tilewidth;
-    const tileH = json.tileheight;
-    const blocosSolidos = level.blocosSolidos || [];
-
-    json.layers.filter(l => l.type === "tilelayer").forEach(layer => {
-        layer.data.forEach((tileId, index) => {
-            if (tileId === 0) return;
-
-            const x = (index % json.width) * tileW * escala;
-            const y = Math.floor(index / json.width) * tileH * escala;
-            const isSolid = blocosSolidos.includes(tileId);
-
-            const componentes = [
-                sprite(`tile_${tileId}`),
-                pos(x, y),
-                // Blocos sólidos ficam na mesma profundidade do jogador, decorações vão pro fundo
-                z(isSolid ? 0 : -50),
-            ];
-            if (escala !== 1) componentes.push(scale(escala));
-
-            if (isSolid) {
-                componentes.push(area());
-                componentes.push(body({ isStatic: true }));
-                componentes.push("ground");
-            }
-            add(componentes);
-        });
-    });
-}
-
-// ---------------------------------------------------------------------------
-// Tipo "tileset" (level-teste): spritesheet + camada de colisão separada
+// Tipo "tileset" (floresta e caverna): spritesheet + camada de colisão separada
 // ---------------------------------------------------------------------------
 
 async function construirTileset(json, level, escala) {

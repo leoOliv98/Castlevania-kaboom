@@ -15,6 +15,7 @@
 // Dano nele: o game.js chama guardiao.receberDano(dano, direcao) para a espada e para a bola de fogo.
 // Dano nos jogador: caixas invisíveis com a tag "ataqueGuardiao" (e o campo "dano"), tratadas no game.js.
 
+import { flutuar } from "../ui.js";
 import { BALANCEAMENTO } from "../balanceamento.js";
 import { criarExplosaoAzul } from "./lich.js";
 
@@ -258,12 +259,7 @@ export function criarGuardiao(spawnX, spawnPesY) {
             if (++piscadas >= 4) { g.opacity = 1; flashCtrl.cancel(); }
         });
         play(SONS.dano, { volume: 0.5 });
-        add([
-            text(`-${dano}`, { size: 14 }),
-            pos(g.pos.x, g.pos.y - 90),
-            color(255, 255, 0),
-            lifespan(0.4, { fade: 0.4 }),
-        ]);
+        flutuar(`-${dano}`, g.pos.x, g.pos.y - 90, [255, 255, 0], 14, 0.4);
 
         if (g.hp <= 0) { morrer(); return; }
         if (g.fase === 1 && g.hp <= g.maxHp * cfg.fase2NaVida) comecarTransicao();

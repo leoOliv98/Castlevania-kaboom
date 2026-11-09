@@ -16,6 +16,7 @@ export const BALANCEAMENTO = {
     vida: {
         esqueleto: 5,              // a espada (5) derruba em 1 golpe; a bola de fogo (3) em 2
         lobo: 5,
+        lich: 80,                  // a espada (5) derruba em 16 golpes
         guardiao: 60,              // a 50% (30) ele perde a máscara e passa para a fase 2
     },
     bolaDeFogo: {

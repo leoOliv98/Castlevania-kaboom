@@ -1,3 +1,4 @@
+import { flutuar } from "../ui.js";
 import { BALANCEAMENTO } from "../balanceamento.js";
 import { criarBolaDeFogo } from "./bolasDeFogo.js";
 
@@ -59,12 +60,7 @@ export function criarJogador(spawnX, spawnY, opcoes = {}) {
 
                 this.flipX = estavaVirado; 
                 
-                add([
-                    text("Voo Ativado! (10s)", { size: 14 }),
-                    pos(this.pos.x, this.pos.y - 30),
-                    color(150, 200, 255),
-                    lifespan(1, { fade: 1 })
-                ]);
+                flutuar("Voo Ativado! (10s)", this.pos.x, this.pos.y - 30, [150, 200, 255], 14, 1);
             }
         }
     ]);
@@ -90,12 +86,7 @@ export function criarJogador(spawnX, spawnY, opcoes = {}) {
                     player.flipX = estavaVirado;
                 }
                 
-                add([
-                    text("Voo Esgotado!", { size: 14 }),
-                    pos(player.pos.x, player.pos.y - 30),
-                    color(200, 200, 200),
-                    lifespan(1, { fade: 1 })
-                ]);
+                flutuar("Voo Esgotado!", player.pos.x, player.pos.y - 30, [200, 200, 200], 14, 1);
             }
         }
     });
@@ -245,12 +236,7 @@ export function criarJogador(spawnX, spawnY, opcoes = {}) {
             // sem mana: avisa (no máximo 1 aviso a cada 0.6s para não encher a tela)
             if (time() - avisoManaEm > 0.6) {
                 avisoManaEm = time();
-                add([
-                    text("Sem mana!", { size: 14 }),
-                    pos(player.pos.x, player.pos.y - 50),
-                    color(120, 170, 255),
-                    lifespan(0.8, { fade: 0.8 })
-                ]);
+                flutuar("Sem mana!", player.pos.x, player.pos.y - 50, [120, 170, 255], 14, 0.8);
             }
             return;
         }

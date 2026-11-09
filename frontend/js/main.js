@@ -1,6 +1,7 @@
 import kaboom from "https://unpkg.com/kaboom@3000.0.1/dist/kaboom.mjs";
-import { cenaMenu, cenaMorte, cenaGameOver } from "./cenas/menu.js";
+import { cenaMenu, cenaMorte, cenaGameOver, cenaVitoria } from "./cenas/menu.js";
 import { cenaJogo } from "./cenas/game.js";
+import { carregarFontes } from "./ui.js";
 
 kaboom({
     background: [20, 20, 30],
@@ -11,9 +12,13 @@ kaboom({
     scale: 1,  
 });
 
+// Fontes do jogo (ver ui.js)
+carregarFontes();
+
 
 // CARREGAMENTO DOS ASSETS
 loadSprite("background_fase1", "frontend/assets/sprites/fundo-floresta.png");
+loadSprite("background_fase2", "frontend/assets/sprites/fundo-caverna.png");
 
 loadSprite("player", "frontend/assets/sprites/Personagem-Principal-andando.png", {
     sliceX: 6,
@@ -206,31 +211,15 @@ loadSprite("bola_fogo", "frontend/assets/sprites/projetil-bola-de-fogo-mago-shee
     }
 });
 
-// LISTA DE TODOS OS TILES DO CASTELO (Mapeados exatamente na ordem do Tiled Editor)
-const tilesets = [
-    "arco-direita", "arco-esquerda", "candelabro", "chao-castelo-centro",
-    "chao-castelo-centro-esquerda-1", "chao-castelo-topo-1", "chao-castelo-topo-2",
-    "chao-castelo-topo-direita-1", "chao-castelo-topo-esquerda", "gargula",
-    "janela-baixo", "janela-grande-baixo-direita", "janela-grande-baixo-esquerda",
-    "janela-grande-topo-direita", "janela-grande-topo-esquerda", "janela-topo",
-    "janela-vermelha-baixo-castelo", "janela-vermelha-topo-castelo", "janelinha",
-    "musgo-baixo-1", "musgo-baixo-2", "musgo-baixo-direita", "musgo-baixo-esquerda",
-    "musgo-centro-1", "musgo-centro-2", "musgo-centro-direita", "musgo-centro-esquerda",
-    "musgo-topo-1", "musgo-topo-2", "musgo-topo-direita", "musgo-topo-esquerda",
-    "parede-castelo-quebrada", "parede-lisa-castelo", "parede-tijolo-castelo",
-    "parede-tijolo-castelo-2", "parede-vermelha2-castelo", "parede-vermelha-castelo",
-    "parede-vermelha-topo-castelo"
-];
-
-// Carrega os 38 tiles dinamicamente gerando os nomes "tile_1" até "tile_38"
-tilesets.forEach((nomeImagem, index) => {
-    const tileId = index + 1; // O Tiled soma 1 no ID das imagens
-    loadSprite(`tile_${tileId}`, `frontend/assets/levels/tilesets/${nomeImagem}.png`);
-});
-
 // CARREGAMENTO DOS ÁUDIOS
+// ITENS
+loadSound("item_pego", "frontend/assets/sounds/item-pego.mp3");
+loadSound("item_usado", "frontend/assets/sounds/item-usado.mp3");
+
 // FASE 1
 loadSound("musica_fase1", "frontend/assets/sounds/level-1.mp3");
+// FASE 2
+loadSound("musica_fase2", "frontend/assets/sounds/level-2.mp3");
 
 // PLAYER
 loadSound("voz_hit_1", "frontend/assets/sounds/mago-sendo-acertado-1.mp3");
@@ -266,6 +255,7 @@ loadSound("morte_lich", "frontend/assets/sounds/morte-lich.mp3");
 scene("menu", cenaMenu);
 scene("death", cenaMorte);
 scene("gameover", cenaGameOver);
+scene("vitoria", cenaVitoria);
 scene("game", cenaJogo);
 
 // INICIA O JOGO
