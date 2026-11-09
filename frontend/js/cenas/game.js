@@ -40,7 +40,7 @@ export async function cenaJogo(data = { lives: 3 }) {
 
     // INICIA A MÚSICA DE FUNDO DA FASE (definida em levels.js)
     const musicaFase = play(level.musica, {
-        volume: 0.4,   // Ajuste de 0.0 (mudo) a 1.0 (máximo)
+        volume: 0.6,   // Ajuste de 0.0 (mudo) a 1.0 (máximo)
         loop: true     // Mantém a música repetindo em loop contínuo
     });
 

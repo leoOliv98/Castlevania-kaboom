@@ -48,7 +48,7 @@ const pool = new Pool({
     host: '127.0.0.1', // (Lembre-se de mudar para 'db' caso rode via Docker Compose depois)
     database: 'gamehost_db',
     password: 'deves2020',
-    port: 5432,
+    port: 5433,
 });
 
 // Garante que as tabelas necessárias existam no banco

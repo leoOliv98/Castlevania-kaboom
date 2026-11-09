@@ -94,7 +94,7 @@ export function cenaVitoria(data = {}) {
     const cx = center().x;
     rotulo("VITÓRIA!", { x: cx, y: 135, tam: 96, cor: CORES.ouro, fonte: FONTE_TITULO, sombraPx: 6 });
     filete(cx, 210, 480);
-    rotulo("O Lich foi derrotado e a caverna está em paz.", { x: cx, y: 255, tam: 28, cor: [255, 255, 255] });
+    rotulo("O Lich foi derrotado e esta terra agora está em paz.", { x: cx, y: 255, tam: 28, cor: [255, 255, 255] });
     if (data.lives !== undefined) {
         rotulo(`Vidas restantes: ${data.lives}`, { x: cx, y: 310, tam: 24, cor: CORES.pergaminho });
     }

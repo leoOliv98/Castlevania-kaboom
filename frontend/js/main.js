@@ -216,9 +216,8 @@ loadSprite("bola_fogo", "frontend/assets/sprites/projetil-bola-de-fogo-mago-shee
 loadSound("item_pego", "frontend/assets/sounds/item-pego.mp3");
 loadSound("item_usado", "frontend/assets/sounds/item-usado.mp3");
 
-// FASE 1
+// FASES
 loadSound("musica_fase1", "frontend/assets/sounds/level-1.mp3");
-// FASE 2
 loadSound("musica_fase2", "frontend/assets/sounds/level-2.mp3");
 
 // PLAYER

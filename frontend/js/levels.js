@@ -50,7 +50,7 @@ export const LEVELS = {
         tipo: "tileset",
         camadasSolidas: ["solidos"],
         escala: 1,
-        musica: "musica_fase1",        // provisório: troque quando tiver a música da caverna (loadSound no main.js)
+        musica: "musica_fase2",        // provisório: troque quando tiver a música da caverna (loadSound no main.js)
         // 1920 px de largura x 0.667 = 1280 (a largura da tela); o fim da imagem é só escuridão e fica fora da tela
         fundo: { sprite: "background_fase2", modo: "tela", escala: 1280 / 1920 },
         solidoOffsetY: 0,              // ajuste fino: se o jogador parecer flutuar (ou afundar) no chão, mude este valor
