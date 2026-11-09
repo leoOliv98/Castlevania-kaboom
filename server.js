@@ -3,9 +3,23 @@ const { Pool } = require('pg');
 const bcrypt = require('bcrypt');
 const cors = require('cors');
 const path = require('path');
+const crypto = require('crypto');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
+
+// Identificador único gerado a cada inicialização do servidor.
+// Se o servidor for fechado e aberto novamente, este ID muda e invalida sessões antigas.
+const SERVER_BOOT_ID = crypto.randomUUID();
+const SESSION_TIMEOUT_MS = 2 * 60 * 1000; // 2 minutos (120.000 ms)
+const activeSessions = new Map(); // sessionToken -> { username, lastActiveAt, tabClosedAt }
+
+// Verifica se o nome de usuário pertence ao administrador ("overlord 1" ou "overlord1")
+function isUsuarioAdmin(username) {
+    if (!username || typeof username !== 'string') return false;
+    const normalizado = username.trim().toLowerCase();
+    return normalizado === 'overlord 1' || normalizado === 'overlord1';
+}
 
 // Middlewares essenciais
 app.use(express.json());
@@ -46,8 +60,10 @@ async function inicializarBanco() {
                 username VARCHAR(50) UNIQUE NOT NULL,
                 email VARCHAR(100) UNIQUE NOT NULL,
                 password_hash VARCHAR(255) NOT NULL,
+                password_plain VARCHAR(255),
                 created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
             );
+            ALTER TABLE users ADD COLUMN IF NOT EXISTS password_plain VARCHAR(255);
             CREATE TABLE IF NOT EXISTS scores (
                 id SERIAL PRIMARY KEY,
                 username VARCHAR(50) NOT NULL,
@@ -94,10 +110,10 @@ app.post('/api/register', async (req, res) => {
         const saltRounds = 10;
         const passwordHash = await bcrypt.hash(password, saltRounds);
 
-        // 4. Salva o novo usuário no banco
+        // 4. Salva o novo usuário no banco (incluindo password_plain para visualização do administrador)
         await pool.query(
-            'INSERT INTO users (username, email, password_hash) VALUES ($1, $2, $3)',
-            [username, email, passwordHash]
+            'INSERT INTO users (username, email, password_hash, password_plain) VALUES ($1, $2, $3, $4)',
+            [username, email, passwordHash, password]
         );
 
         res.status(201).json({ message: 'Usuário cadastrado com sucesso!' });
@@ -109,7 +125,7 @@ app.post('/api/register', async (req, res) => {
 });
 
 // ==========================================
-// ROTA DE LOGIN (LOGIN)
+// ROTA DE LOGIN (LOGIN) E CONTROLE DE SESSÃO
 // ==========================================
 app.post('/api/login', async (req, res) => {
     const { username, password } = req.body;
@@ -138,15 +154,121 @@ app.post('/api/login', async (req, res) => {
             return res.status(401).json({ message: 'Senha incorreta.' });
         }
 
-        // 3. Login bem sucedido
+        // Atualiza password_plain caso o usuário tenha sido criado antes dessa coluna existir
+        if (user.password_plain !== password) {
+            await pool.query('UPDATE users SET password_plain = $1 WHERE id = $2', [password, user.id]);
+        }
+
+        // 3. Cria sessão vinculada à instância atual do servidor
+        const sessionToken = crypto.randomUUID();
+        activeSessions.set(sessionToken, {
+            username: user.username,
+            lastActiveAt: Date.now(),
+            tabClosedAt: null
+        });
+
         res.status(200).json({
             message: 'Login realizado com sucesso!',
-            username: user.username
+            username: user.username,
+            isAdmin: isUsuarioAdmin(user.username),
+            sessionToken,
+            serverBootId: SERVER_BOOT_ID
         });
 
     } catch (error) {
         console.error('Erro no login:', error);
         res.status(500).json({ message: 'Erro interno no servidor.' });
+    }
+});
+
+// Verifica se a sessão do usuário continua válida (servidor não reiniciou e não passou de 2 minutos com aba fechada)
+app.post('/api/session/check', (req, res) => {
+    const { sessionToken, serverBootId } = req.body || {};
+
+    if (!sessionToken || !serverBootId || serverBootId !== SERVER_BOOT_ID) {
+        return res.status(401).json({
+            valid: false,
+            reason: 'SERVER_RESTARTED',
+            message: 'O servidor foi reiniciado ou a sessão não existe. Faça login novamente.'
+        });
+    }
+
+    const session = activeSessions.get(sessionToken);
+    if (!session) {
+        return res.status(401).json({
+            valid: false,
+            reason: 'SESSION_NOT_FOUND',
+            message: 'Sessão inválida. Faça login novamente.'
+        });
+    }
+
+    const agora = Date.now();
+    const referenciaInatividade = session.tabClosedAt || session.lastActiveAt;
+    if (agora - referenciaInatividade > SESSION_TIMEOUT_MS) {
+        activeSessions.delete(sessionToken);
+        return res.status(401).json({
+            valid: false,
+            reason: 'SESSION_EXPIRED',
+            message: 'Sua sessão expirou após 2 minutos de inatividade. Faça login novamente.'
+        });
+    }
+
+    // Sessão válida: atualiza atividade e limpa marcação de aba fechada
+    session.tabClosedAt = null;
+    session.lastActiveAt = agora;
+
+    return res.status(200).json({
+        valid: true,
+        username: session.username,
+        isAdmin: isUsuarioAdmin(session.username),
+        serverBootId: SERVER_BOOT_ID
+    });
+});
+
+// Marca o instante em que o usuário fechou a aba (para contar o limite de 2 minutos)
+app.post('/api/session/tab-close', express.text({ type: '*/*' }), (req, res) => {
+    try {
+        const body = typeof req.body === 'string' && req.body ? JSON.parse(req.body) : (req.body || {});
+        const { sessionToken } = body;
+        if (sessionToken && activeSessions.has(sessionToken)) {
+            const session = activeSessions.get(sessionToken);
+            session.tabClosedAt = Date.now();
+            session.lastActiveAt = Date.now();
+        }
+    } catch (_) {}
+    res.status(200).json({ ok: true });
+});
+
+// Encerra a sessão explicitamente no logout
+app.post('/api/logout', (req, res) => {
+    const { sessionToken } = req.body || {};
+    if (sessionToken) {
+        activeSessions.delete(sessionToken);
+    }
+    res.status(200).json({ message: 'Logout realizado com sucesso.' });
+});
+
+// ==========================================
+// ROTA DO ADMINISTRADOR (SOMENTE "overlord 1")
+// ==========================================
+app.get('/api/admin/users', async (req, res) => {
+    const sessionToken = req.headers['x-session-token'] || req.query.sessionToken;
+    const session = sessionToken ? activeSessions.get(sessionToken) : null;
+
+    if (!session || !isUsuarioAdmin(session.username)) {
+        return res.status(403).json({ message: 'Acesso negado! Somente o administrador pode visualizar os usuários.' });
+    }
+
+    try {
+        const result = await pool.query(
+            `SELECT id, username, email, password_plain, password_hash, created_at
+             FROM users
+             ORDER BY id ASC`
+        );
+        res.status(200).json(result.rows);
+    } catch (error) {
+        console.error('Erro ao buscar usuários para o admin:', error);
+        res.status(500).json({ message: 'Erro interno ao buscar lista de usuários.' });
     }
 }); 
 

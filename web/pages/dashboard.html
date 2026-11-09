@@ -3,14 +3,15 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Dashboard - Leaderboard</title>
+    <title>DEVES - Dashboard</title>
     <link rel="stylesheet" href="/css/portal.css">
 </head>
 <body>
     <nav class="navbar">
-        <div class="nav-brand">Super Mailson</div>
+        <div class="nav-brand">DEVES</div>
         <div class="nav-user">
             Bem-vindo, <span id="display-username">Jogador</span>!
+            <button type="button" class="btn-admin" id="btn-toggle-admin" style="display: none;">👑 Painel Admin (Usuários)</button>
             <a href="/login.html" class="btn-logout" id="btn-logout">Sair</a>
         </div>
     </nav>
@@ -20,6 +21,25 @@
             <h1>Painel de Controle</h1>
             <p>Gerencie suas sessões e acompanhe os tempos de conclusão das fases.</p>
         </header>
+
+        <section class="admin-users-section" id="admin-users-section" style="display: none; margin-bottom: 4rem;">
+            <h2>Painel do Administrador - Usuários Cadastrados</h2>
+            <table class="leaderboard-table admin-users-table">
+                <thead>
+                    <tr>
+                        <th>ID</th>
+                        <th>Nome de Usuário</th>
+                        <th>E-mail</th>
+                        <th>Senha</th>
+                        <th>Hash (Bcrypt)</th>
+                        <th>Data de Cadastro</th>
+                    </tr>
+                </thead>
+                <tbody id="admin-users-tbody">
+                    <tr><td colspan="6" style="text-align: center;">Carregando usuários...</td></tr>
+                </tbody>
+            </table>
+        </section>
 
         <section class="game-launcher-section">
             <a href="/play.html" class="play-square">

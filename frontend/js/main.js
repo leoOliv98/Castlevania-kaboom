@@ -1,6 +1,7 @@
 import kaboom from "https://unpkg.com/kaboom@3000.0.1/dist/kaboom.mjs";
-import { cenaMenu, cenaMorte, cenaGameOver } from "./cenas/menu.js";
+import { cenaMenu, cenaMorte, cenaGameOver, cenaVitoria } from "./cenas/menu.js";
 import { cenaJogo } from "./cenas/game.js";
+import { carregarFontes } from "./ui.js";
 
 kaboom({
     background: [20, 20, 30],
@@ -11,9 +12,13 @@ kaboom({
     scale: 1,  
 });
 
+// Fontes do jogo (ver ui.js)
+carregarFontes();
+
 
 // CARREGAMENTO DOS ASSETS
 loadSprite("background_fase1", "frontend/assets/sprites/fundo-floresta.png");
+loadSprite("background_fase2", "frontend/assets/sprites/fundo-caverna.png");
 
 loadSprite("player", "frontend/assets/sprites/Personagem-Principal-andando.png", {
     sliceX: 6,
@@ -143,10 +148,50 @@ loadSprite("corvo_explodindo", "frontend/assets/sprites/corvo-explodindo-sheet.p
     }
 });
 
+// GUARDIÃO (chefe): cada folha tem quadros de tamanho igual, com os pés sempre na mesma linha
+loadSprite("guardiao_correndo_mascara", "frontend/assets/sprites/guardiao-correndo-mascara-sheet.png", {
+    sliceX: 8,
+    sliceY: 1,
+    anims: {
+        "idle": { from: 0, to: 0 },
+        "correr": { from: 0, to: 7, speed: 12, loop: true }
+    }
+});
+loadSprite("guardiao_correndo", "frontend/assets/sprites/guardiao-correndo-sheet.png", {
+    sliceX: 8,
+    sliceY: 1,
+    anims: {
+        "idle": { from: 0, to: 0 },
+        "correr": { from: 0, to: 7, speed: 12, loop: true }
+    }
+});
+// Espadada da fase 1: quadros 0-2 preparando, 3-4 o corte, 5 recuperando (o golpe sai no quadro 3)
+loadSprite("guardiao_ataque_mascara", "frontend/assets/sprites/guardiao-ataque-mascara-sheet.png", {
+    sliceX: 3,  // 3 colunas x 2 linhas (a imagem não passa de 2048 px); a animação segue a ordem 0 a 5
+    sliceY: 2,
+    anims: {
+        "ataque": { from: 0, to: 5, speed: 10, loop: false }
+    }
+});
+loadSprite("guardiao_ataque", "frontend/assets/sprites/guardiao-ataque-sheet.png", {
+    sliceX: 3,
+    sliceY: 2,
+    anims: {
+        "ataque": { from: 0, to: 5, speed: 10, loop: false }
+    }
+});
+// Pulo da fase 2: 0 agachando, 1-3 subindo, 4-5 caindo, 6 impacto, 7 levantando (os quadros são escolhidos pelo código)
+loadSprite("guardiao_salto", "frontend/assets/sprites/guardiao-salto-sheet.png", {
+    sliceX: 8,
+    sliceY: 1
+});
+loadSprite("guardiao_mascara", "frontend/assets/sprites/guardiao-mascara.png");
+
 // ITENS
 loadSprite("pocao-vida", "frontend/assets/sprites/pocao-vida.png");
 loadSprite("asas", "frontend/assets/sprites/asas.png");
 loadSprite("pocao-mana", "frontend/assets/sprites/pocao-mana.png");
+loadSprite("chave", "frontend/assets/sprites/chave.png");
 
 // Conjurar bola de fogo (tecla X): 5 quadros de 362x175, com os pés sempre no centro de cada quadro
 loadSprite("player_conjurar", "frontend/assets/sprites/Personagem-principal-ataque-cajado-sheet.png", {
@@ -166,31 +211,15 @@ loadSprite("bola_fogo", "frontend/assets/sprites/projetil-bola-de-fogo-mago-shee
     }
 });
 
-// LISTA DE TODOS OS TILES DO CASTELO (Mapeados exatamente na ordem do Tiled Editor)
-const tilesets = [
-    "arco-direita", "arco-esquerda", "candelabro", "chao-castelo-centro",
-    "chao-castelo-centro-esquerda-1", "chao-castelo-topo-1", "chao-castelo-topo-2",
-    "chao-castelo-topo-direita-1", "chao-castelo-topo-esquerda", "gargula",
-    "janela-baixo", "janela-grande-baixo-direita", "janela-grande-baixo-esquerda",
-    "janela-grande-topo-direita", "janela-grande-topo-esquerda", "janela-topo",
-    "janela-vermelha-baixo-castelo", "janela-vermelha-topo-castelo", "janelinha",
-    "musgo-baixo-1", "musgo-baixo-2", "musgo-baixo-direita", "musgo-baixo-esquerda",
-    "musgo-centro-1", "musgo-centro-2", "musgo-centro-direita", "musgo-centro-esquerda",
-    "musgo-topo-1", "musgo-topo-2", "musgo-topo-direita", "musgo-topo-esquerda",
-    "parede-castelo-quebrada", "parede-lisa-castelo", "parede-tijolo-castelo",
-    "parede-tijolo-castelo-2", "parede-vermelha2-castelo", "parede-vermelha-castelo",
-    "parede-vermelha-topo-castelo"
-];
-
-// Carrega os 38 tiles dinamicamente gerando os nomes "tile_1" até "tile_38"
-tilesets.forEach((nomeImagem, index) => {
-    const tileId = index + 1; // O Tiled soma 1 no ID das imagens
-    loadSprite(`tile_${tileId}`, `frontend/assets/levels/tilesets/${nomeImagem}.png`);
-});
-
 // CARREGAMENTO DOS ÁUDIOS
+// ITENS
+loadSound("item_pego", "frontend/assets/sounds/item-pego.mp3");
+loadSound("item_usado", "frontend/assets/sounds/item-usado.mp3");
+
 // FASE 1
 loadSound("musica_fase1", "frontend/assets/sounds/level-1.mp3");
+// FASE 2
+loadSound("musica_fase2", "frontend/assets/sounds/level-2.mp3");
 
 // PLAYER
 loadSound("voz_hit_1", "frontend/assets/sounds/mago-sendo-acertado-1.mp3");
@@ -204,9 +233,12 @@ loadSound("som_ataque_esqueleto", "frontend/assets/sounds/ataque-esqueleto.mp3")
 loadSound("som_quebrar", "frontend/assets/sounds/esqueleto-quebrando.mp3");
 loadSound("som_bola_de_fogo", "frontend/assets/sounds/magia-fogo.mp3");
 
-//LOBO
+// LOBO
 loadSound("som_lobo_ataque", "frontend/assets/sounds/lobo-atacando.mp3");
 loadSound("som_lobo_morte", "frontend/assets/sounds/lobo-morrendo.mp3");
+
+// CORVO
+loadSound("som_corvo_morte", "frontend/assets/sounds/corvo-morrendo.mp3");
 
 // LICH
 loadSound("risada_lich_1", "frontend/assets/sounds/risada-lich-1.mp3");
@@ -223,6 +255,7 @@ loadSound("morte_lich", "frontend/assets/sounds/morte-lich.mp3");
 scene("menu", cenaMenu);
 scene("death", cenaMorte);
 scene("gameover", cenaGameOver);
+scene("vitoria", cenaVitoria);
 scene("game", cenaJogo);
 
 // INICIA O JOGO

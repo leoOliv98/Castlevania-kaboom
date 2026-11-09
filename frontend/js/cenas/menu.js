@@ -1,26 +1,60 @@
-import { LEVELS, ORDEM_LEVELS, LEVEL_PADRAO } from "../levels.js";
+import { LEVEL_PADRAO } from "../levels.js";
+import { rotulo, piscar, fundoTematico, brasas, filete, CORES, FONTE_TITULO, FONTE_TEXTO } from "../ui.js";
+
+// Linha de controles: tecla em destaque + o que ela faz
+function linhaControle(x, y, tecla, acao) {
+    rotulo(tecla, { x, y, tam: 22, cor: CORES.ouro, ancora: "right" });
+    rotulo(acao, { x: x + 14, y, tam: 20, cor: CORES.pergaminho, ancora: "left" });
+}
 
 export function cenaMenu() {
-    add([ rect(width(), height()), color(10, 10, 20), pos(0, 0) ]);
-    add([ text("SUPER MAILSON", { size: 64, font: "sans-serif" }), pos(center().x, center().y - 80), anchor("center"), color(200, 30, 30) ]);
-    add([ text("O Despertar do Mago", { size: 32, font: "sans-serif" }), pos(center().x, center().y - 20), anchor("center"), color(255, 255, 255) ]);
+    fundoTematico("background_fase2", 0.6);
+    brasas(40);
 
-    const startText = add([ text("Pressione ENTER para Jogar", { size: 24 }), pos(center().x, center().y + 80), anchor("center"), color(150, 150, 150) ]);
-    startText.onUpdate(() => { startText.opacity = wave(0.2, 1, time() * 3); });
+    const cx = center().x;
 
-    // Seleção de fase: tecla 1, 2, 3... abre o level correspondente (ordem definida em levels.js)
-    ORDEM_LEVELS.forEach((id, i) => {
-        add([
-            text(`[${i + 1}] ${LEVELS[id].nome}`, { size: 18 }),
-            pos(center().x, center().y + 125 + i * 28),
-            anchor("center"),
-            color(120, 120, 140)
-        ]);
-        onKeyPress(String(i + 1), () => go("game", { lives: 3, level: id }));
+    // Título
+    rotulo("DEVES", { x: cx, y: 120, tam: 88, cor: CORES.ouro, fonte: FONTE_TITULO, sombraPx: 6 });
+    filete(cx, 190, 520);
+    rotulo("O Despertar do Mago", { x: cx, y: 228, tam: 34, cor: CORES.pergaminho, fonte: FONTE_TEXTO });
+
+    // Chamada para jogar
+    const iniciar = rotulo("Pressione ENTER para começar", { x: cx, y: 318, tam: 30, cor: [255, 255, 255] });
+    piscar(iniciar, 0.25, 1, 3);
+
+    // Painel de controles
+    add([ rect(700, 178), pos(cx, 450), anchor("center"), color(8, 4, 6), opacity(0.72), z(0) ]);
+    add([ rect(700, 178), pos(cx, 450), anchor("center"), outline(2, rgb(...CORES.brasa)), opacity(0), z(1) ]);
+    rotulo("CONTROLES", { x: cx, y: 383, tam: 22, cor: CORES.brasa, fonte: FONTE_TITULO });
+
+    linhaControle(440, 418, "SETAS", "Mover e pular");
+    linhaControle(440, 450, "Z", "Atacar com a espada");
+    linhaControle(440, 482, "Z + BAIXO", "Golpe para baixo");
+    linhaControle(800, 418, "X", "Bola de fogo");
+    linhaControle(800, 450, "A", "Trocar de item");
+    linhaControle(800, 482, "S", "Usar o item");
+    rotulo("ESC pausa o jogo", { x: cx, y: 508, tam: 16, cor: CORES.cinza });
+
+    // Permite digitar "godmod" já na tela do menu para começar o jogo com imortalidade e asas infinitas
+    let bufferGodmodMenu = "";
+    let avisoGodmodMenu = null;
+    if (window.godmodAtivo) {
+        avisoGodmodMenu = rotulo("GODMOD ATIVO (Imortal + Asas Infinitas)", { x: cx, y: 272, tam: 20, cor: CORES.ouro });
+    }
+    onCharInput((ch) => {
+        bufferGodmodMenu = (bufferGodmodMenu + ch.toLowerCase()).slice(-6);
+        if (bufferGodmodMenu === "godmod" && !window.godmodAtivo) {
+            window.godmodAtivo = true;
+            if (!avisoGodmodMenu) {
+                avisoGodmodMenu = rotulo("GODMOD ATIVO (Imortal + Asas Infinitas)", { x: cx, y: 272, tam: 20, cor: CORES.ouro });
+            }
+        }
     });
 
-    onKeyPress("enter", () => go("game", { lives: 3, level: LEVEL_PADRAO }));
-    onKeyPress("space", () => go("game", { lives: 3, level: LEVEL_PADRAO }));
+    // A fase é sempre a primeira: não há seleção de level
+    const comecar = () => go("game", { lives: 3, level: LEVEL_PADRAO });
+    onKeyPress("enter", comecar);
+    onKeyPress("space", comecar);
 }
 
 function formatarTempo(totalSegundos = 0) {
@@ -30,33 +64,72 @@ function formatarTempo(totalSegundos = 0) {
 }
 
 export function cenaMorte(data) {
-    add([ rect(width(), height()), color(0, 0, 0), pos(0, 0) ]);
-    add([ text("VOCÊ MORREU!", { size: 48 }), pos(center().x, center().y - 50), anchor("center"), color(220, 20, 20) ]);
-    add([ text(`Vidas restantes: ${data.lives}`, { size: 24 }), pos(center().x, center().y + 5), anchor("center"), color(255, 255, 255) ]);
+    fundoTematico(null);
+    add([ rect(width(), height()), color(90, 0, 0), opacity(0.28), z(-97) ]);
+    brasas(16, [200, 40, 30]);
+
+    const cx = center().x;
+    rotulo("VOCÊ MORREU", { x: cx, y: center().y - 60, tam: 80, cor: CORES.sangue, fonte: FONTE_TITULO, sombraPx: 5 });
+    filete(cx, center().y - 5, 380, CORES.sangue);
+    rotulo(`Vidas restantes: ${data.lives}`, { x: cx, y: center().y + 35, tam: 30, cor: CORES.pergaminho });
     if (data.tempo !== undefined) {
-        add([ text(`Tempo registrado: ${formatarTempo(data.tempo)}`, { size: 20 }), pos(center().x, center().y + 45), anchor("center"), color(100, 255, 218) ]);
+        rotulo(`Tempo registrado: ${formatarTempo(data.tempo)}`, { x: cx, y: center().y + 75, tam: 24, cor: CORES.ouro });
+    }
+    if (data.lives > 0) {
+        const t = rotulo("Levante-se, mago...", { x: cx, y: center().y + 120, tam: 22, cor: CORES.cinza });
+        piscar(t, 0.3, 1, 2);
     }
 
     wait(2, () => {
         // Volta para a MESMA fase em que o jogador morreu
-        if (data.lives > 0) go("game", { lives: data.lives, level: data.level });
+        if (data.lives > 0) go("game", { lives: data.lives, level: data.level, tempo: data.tempo });
         else go("gameover", { tempo: data.tempo });
     });
 }
 
-export function cenaGameOver(data = {}) {
-    add([ rect(width(), height()), color(20, 5, 5), pos(0, 0) ]);
-    add([ text("GAME OVER", { size: 64 }), pos(center().x, center().y - 50), anchor("center"), color(180, 0, 0) ]);
+export function cenaVitoria(data = {}) {
+    fundoTematico("background_fase2", 0.7);
+    brasas(46, CORES.ouro);
+
+    const cx = center().x;
+    rotulo("VITÓRIA!", { x: cx, y: 135, tam: 96, cor: CORES.ouro, fonte: FONTE_TITULO, sombraPx: 6 });
+    filete(cx, 210, 480);
+    rotulo("O Lich foi derrotado e a caverna está em paz.", { x: cx, y: 255, tam: 28, cor: [255, 255, 255] });
+    if (data.lives !== undefined) {
+        rotulo(`Vidas restantes: ${data.lives}`, { x: cx, y: 310, tam: 24, cor: CORES.pergaminho });
+    }
     if (data.tempo !== undefined) {
-        add([ text(`Tempo registrado: ${formatarTempo(data.tempo)}`, { size: 22 }), pos(center().x, center().y + 5), anchor("center"), color(100, 255, 218) ]);
+        rotulo(`Tempo registrado: ${formatarTempo(data.tempo)}`, { x: cx, y: 355, tam: 28, cor: CORES.ouro });
+    }
+    rotulo("Obrigado por jogar!", { x: cx, y: 415, tam: 26, cor: CORES.brasa, fonte: FONTE_TITULO });
+
+    const dica = rotulo("Pressione ENTER para voltar ao menu", { x: cx, y: 500, tam: 22, cor: CORES.cinza });
+    piscar(dica, 0.3, 1, 3);
+
+    const voltar = () => go("menu");
+    onKeyPress("enter", voltar);
+    onKeyPress("space", voltar);
+    onKeyPress("escape", voltar);
+    wait(12, voltar);   // se ninguém apertar nada, volta sozinho
+}
+
+export function cenaGameOver(data = {}) {
+    fundoTematico(null);
+    add([ rect(width(), height()), color(70, 0, 0), opacity(0.3), z(-97) ]);
+    brasas(14, [160, 30, 30]);
+
+    const cx = center().x;
+    rotulo("GAME OVER", { x: cx, y: center().y - 80, tam: 96, cor: [170, 20, 20], fonte: FONTE_TITULO, sombraPx: 6 });
+    filete(cx, center().y - 15, 420, CORES.sangue);
+    rotulo("A escuridão venceu desta vez...", { x: cx, y: center().y + 30, tam: 26, cor: CORES.pergaminho });
+    if (data.tempo !== undefined) {
+        rotulo(`Tempo registrado: ${formatarTempo(data.tempo)}`, { x: cx, y: center().y + 75, tam: 24, cor: CORES.ouro });
     }
 
-    const restartText = add([ text("Pressione ENTER para voltar ao Menu", { size: 22 }), pos(center().x, center().y + 55), anchor("center"), color(200, 200, 200) ]);
-    restartText.onUpdate(() => { restartText.opacity = wave(0.3, 1, time() * 4); });
+    const dica = rotulo("Pressione ENTER para voltar ao menu", { x: cx, y: center().y + 130, tam: 22, cor: CORES.cinza });
+    piscar(dica, 0.3, 1, 4);
 
     onKeyPress("enter", () => go("menu"));
     onKeyPress("space", () => go("menu"));
-    
-    // Adiciona o atalho da tecla ESC para voltar ao menu
     onKeyPress("escape", () => go("menu"));
 }

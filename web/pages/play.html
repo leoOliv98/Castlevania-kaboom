@@ -3,14 +3,14 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Super Mailson - Área de Jogo</title>
+    <title>DEVES - Área de Jogo</title>
     <link rel="stylesheet" href="/css/portal.css">
     <link rel="stylesheet" href="/css/game-container.css">
 </head>
 <body>
-    <!-- Barra Superior do GameHost (com verificação de usuário) -->
+    <!-- Barra Superior do DEVES (com verificação de usuário) -->
     <nav class="navbar">
-        <div class="nav-brand">GameHost - Área de Jogo</div>
+        <div class="nav-brand">DEVES - Área de Jogo</div>
         <div class="nav-user">
             Guerreiro(a): <span id="display-username">Aventureiro</span>
             <a href="/dashboard.html" class="btn-logout">Voltar ao Painel</a>
@@ -18,22 +18,14 @@
     </nav>
 
     <main class="game-page-content" style="text-align: center;">
-        <h1>Super Mailson: O Despertar do Mago</h1>
+        <h1>DEVES: O Despertar do Mago</h1>
 
         <!-- Container onde o Kaboom vai renderizar o jogo -->
         <div id="game-container"></div>
     </main>
 
-    <!-- Script de Proteção (Login) -->
-    <script>
-        const loggedUser = localStorage.getItem('loggedUser');
-        if (!loggedUser) {
-            alert('Acesso negado! Faça login para entrar na masmorra.');
-            window.location.href = '/login.html';
-        } else {
-            document.getElementById('display-username').textContent = loggedUser;
-        }
-    </script>
+    <!-- Script de Proteção e Monitoramento de Sessão (Login, Queda do Servidor e Timeout de 2 min) -->
+    <script src="/js/portal-auth.js"></script>
 
     <!-- 1º: Carrega a estrutura de dados do inventário -->
     <script src="/frontend/js/cenas/inventario.js"></script>

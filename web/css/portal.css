@@ -181,8 +181,9 @@ h1, h2, h3, .nav-brand {
     font-weight: 700;
 }
 
-.btn-logout {
-    margin-left: 1.5rem;
+.btn-logout,
+.btn-admin {
+    margin-left: 1rem;
     color: var(--text-main);
     text-decoration: none;
     font-size: 0.9rem;
@@ -191,7 +192,20 @@ h1, h2, h3, .nav-brand {
     background-color: rgba(122, 23, 23, 0.2);
     border-radius: 2px;
     font-family: 'Cinzel', serif;
+    cursor: pointer;
     transition: 0.3s;
+}
+
+.btn-admin {
+    border-color: var(--gold);
+    background-color: rgba(194, 163, 83, 0.15);
+    color: var(--gold-light);
+}
+
+.btn-admin:hover {
+    background-color: rgba(194, 163, 83, 0.35);
+    color: #fff;
+    box-shadow: 0 0 10px rgba(194, 163, 83, 0.5);
 }
 
 .btn-logout:hover {
@@ -287,7 +301,8 @@ h1, h2, h3, .nav-brand {
 }
 
 .leaderboard-section h2,
-.user-history-section h2 {
+.user-history-section h2,
+.admin-users-section h2 {
     margin-bottom: 1.5rem;
     text-align: center;
     font-size: 1.8rem;

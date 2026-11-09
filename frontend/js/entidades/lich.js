@@ -1,3 +1,5 @@
+import { BALANCEAMENTO } from "../balanceamento.js";
+
 export function criarLich(spawnX, spawnY) {
     const lich = add([
         sprite("lich", { anim: "walk" }),
@@ -11,8 +13,8 @@ export function criarLich(spawnX, spawnY) {
             speed: 50, 
             tempoAtaque: 0,
             tempoRisada: 0, // NOVO: Controla o intervalo para as risadas
-            hp: 30,
-            maxHp: 30,
+            hp: BALANCEAMENTO.vida.lich,
+            maxHp: BALANCEAMENTO.vida.lich,
             isDead: false,
             isAttacking: false 
         }
@@ -61,7 +63,7 @@ export function criarLich(spawnX, spawnY) {
             const distanciaX = Math.abs(player.pos.x - lich.pos.x);
 
             if (distanciaX < 250) {
-                iniciarAtaqueRaio(player.pos.x);
+                iniciarAtaqueRaio(player.pos.x, player.pos.y);
             } else {
                 iniciarAtaque(dirX);
             }
@@ -83,7 +85,27 @@ export function criarLich(spawnX, spawnY) {
         });
     }
 
-    function iniciarAtaqueRaio(alvoX) {
+    // Calcula por onde o raio cai sobre a coluna x. Ele vem do ALTO da tela e para no primeiro bloco que encontra,
+    // então o jogador pode se proteger embaixo de uma plataforma (o raio bate em cima dela). Se não houver nada acima
+    // dele, o raio vai até o chão. Usa hasPoint() (como o guardião): funciona com blocos de qualquer largura e rampas.
+    function calcularRaio(x, y) {
+        const solos = get("ground");
+        const solido = (py) => solos.some(s => s.hasPoint(vec2(x, py)));
+        const topo = y - 450;     // um pouco acima da borda de cima da tela (a tela tem 600 px de altura)
+
+        // O alto da tela já está dentro da rocha (teto grosso): o raio bate na parte de baixo dela, e o jogador fica protegido
+        if (solido(topo)) {
+            let py = topo;
+            while (solido(py) && py < y + 1400) py += 4;
+            return { origemY: py - 60, limiteY: py };
+        }
+        for (let py = topo; py < y + 1400; py += 4) {
+            if (solido(py)) return { origemY: topo, limiteY: py };   // primeiro bloco: plataforma, teto ou chão
+        }
+        return { origemY: topo, limiteY: y + 600 };
+    }
+
+    function iniciarAtaqueRaio(alvoX, alvoY) {
         lich.isAttacking = true;
         lich.use(sprite("lich_ataque"));
         lich.play("ataque");
@@ -99,13 +121,16 @@ export function criarLich(spawnX, spawnY) {
             if (tempoEsperaDisparo <= 0) {
                 controleDisparo.cancel();
                 if (lich.exists() && !lich.isDead) {
-                    criarAvisoRaio(alvoX);
+                    criarAvisoRaio(alvoX, alvoY);
                 }
             }
         });
     }
 
-    function criarAvisoRaio(alvoX) {
+    function criarAvisoRaio(alvoX, alvoY) {
+        // O raio cai do alto e bate no primeiro bloco da coluna (ver calcularRaio)
+        const { origemY, limiteY } = calcularRaio(alvoX, alvoY);
+
         // --- TOCA O SOM DE CARREGAMENTO DO RAIO (FEIXE) QUANDO O AVISO APARECE ---
         play("som_carregando_raio", { 
             volume: 0.7, 
@@ -113,8 +138,8 @@ export function criarLich(spawnX, spawnY) {
         });
 
         const aviso = add([
-            rect(30, 800),
-            pos(alvoX, -200),
+            rect(30, limiteY - origemY),
+            pos(alvoX, origemY),
             color(0, 200, 255),
             opacity(0.3),
             "avisoRaio",
@@ -128,26 +153,14 @@ export function criarLich(spawnX, spawnY) {
             if (aviso.tempoVida <= 0) {
                 controleAviso.cancel();
                 if (aviso.exists()) destroy(aviso);
-                invocarRaioFisico(alvoX);
+                invocarRaioFisico(alvoX, origemY, limiteY);
             }
         });
     }
 
-    function invocarRaioFisico(alvoX) {
+    function invocarRaioFisico(alvoX, origemRaioY, limiteY) {
         // --- TOCA O SOM DE IMPACTO QUANDO O RAIO BATE NO CHÃO ---
         play("som_batida_raio", { volume: 0.8 });
-
-        const blocosSolidos = get("ground");
-        let limiteY = 1200; 
-        const origemRaioY = -200; 
-
-        blocosSolidos.forEach(bloco => {
-            if (bloco.pos.x <= alvoX + 15 && bloco.pos.x + 48 >= alvoX - 15) { 
-                if (bloco.pos.y < limiteY) {
-                    limiteY = bloco.pos.y; 
-                }
-            }
-        });
 
         const alturaDoRaio = limiteY - origemRaioY;
         const larguraRaio = 20;

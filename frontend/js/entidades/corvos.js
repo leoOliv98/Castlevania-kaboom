@@ -62,6 +62,8 @@ export function criarCorvo(zonaSpawn, zonaFim) {
         corvo.explodindo = true;
         corvo.ativo = false;
 
+        play("som_corvo_morte", { volume: 0.5 });
+
         visual.use(sprite("corvo_explodindo"));
         visual.flipX = false;
         visual.scale = vec2(cfg.escalaExplosao);
