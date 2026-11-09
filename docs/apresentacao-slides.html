@@ -99,6 +99,21 @@
             color: var(--gold);
             font-family: 'Cinzel', serif;
         }
+        .formula {
+            font-family: 'Fira Code', monospace;
+            font-size: 1.05rem;
+            background: rgba(0,0,0,0.65);
+            color: var(--teal);
+            border-left: 3px solid var(--gold);
+            padding: 0.8rem 1.1rem;
+            line-height: 1.5;
+            margin: 0.8rem 0;
+        }
+        .compact p, .compact li { font-size: 1.12rem; line-height: 1.45; }
+        .compact li { margin-bottom: 0.45rem; }
+        .compact table { font-size: 0.95rem; }
+        .compact th, .compact td { padding: 0.4rem 0.7rem; }
+        .compact pre { font-size: 0.85rem; }
         .controls {
             display: flex;
             justify-content: space-between;
@@ -131,7 +146,7 @@
                 <div style="width: 240px; height: 3px; background: var(--gold); margin: 2rem auto;"></div>
                 <p style="color: var(--muted);">Use as setas <code>←</code> <code>→</code> do teclado ou os botões abaixo para navegar</p>
             </div>
-            <div style="text-align: center; font-size: 1rem; color: var(--muted);">Slide 1 de 7</div>
+            <div style="text-align: center; font-size: 1rem; color: var(--muted);">Slide 1 de 15</div>
         </section>
 
         <!-- SLIDE 2 -->
@@ -158,7 +173,7 @@
                     </div>
                 </div>
             </div>
-            <div style="text-align: right; font-size: 1rem; color: var(--muted);">Slide 2 de 7</div>
+            <div style="text-align: right; font-size: 1rem; color: var(--muted);">Slide 2 de 15</div>
         </section>
 
         <!-- SLIDE 3 -->
@@ -181,7 +196,7 @@ Castlevania-kaboom/
     ├── cenas/                  # menu.js, game.js, inventario.js
     └── entidades/              # jogador.js, guardiao.js, lich.js, esqueletos.js, lobo.js, corvos.js</pre>
             </div>
-            <div style="text-align: right; font-size: 1rem; color: var(--muted);">Slide 3 de 7</div>
+            <div style="text-align: right; font-size: 1rem; color: var(--muted);">Slide 3 de 15</div>
         </section>
 
         <!-- SLIDE 4 -->
@@ -208,7 +223,7 @@ Castlevania-kaboom/
                     </div>
                 </div>
             </div>
-            <div style="text-align: right; font-size: 1rem; color: var(--muted);">Slide 4 de 7</div>
+            <div style="text-align: right; font-size: 1rem; color: var(--muted);">Slide 4 de 15</div>
         </section>
 
         <!-- SLIDE 5 -->
@@ -235,7 +250,7 @@ Castlevania-kaboom/
                     </tbody>
                 </table>
             </div>
-            <div style="text-align: right; font-size: 1rem; color: var(--muted);">Slide 5 de 7</div>
+            <div style="text-align: right; font-size: 1rem; color: var(--muted);">Slide 5 de 15</div>
         </section>
 
         <!-- SLIDE 6 -->
@@ -248,7 +263,7 @@ Castlevania-kaboom/
                     <li><strong>Administrador Exclusivo (<code>overlord 1</code>):</strong> Apenas o usuário <code>overlord 1</code> tem permissão no backend (HTTP 200 vs 403) e no frontend para visualizar o painel de usuários cadastrados.</li>
                 </ul>
             </div>
-            <div style="text-align: right; font-size: 1rem; color: var(--muted);">Slide 6 de 7</div>
+            <div style="text-align: right; font-size: 1rem; color: var(--muted);">Slide 6 de 15</div>
         </section>
 
         <!-- SLIDE 7 -->
@@ -274,13 +289,219 @@ Castlevania-kaboom/
                     </div>
                 </div>
             </div>
-            <div style="text-align: right; font-size: 1rem; color: var(--muted);">Slide 7 de 7</div>
+            <div style="text-align: right; font-size: 1rem; color: var(--muted);">Slide 7 de 15</div>
+        </section>
+
+        <!-- SLIDE 8 -->
+        <section class="slide compact">
+            <div>
+                <h2>7. Tiled Map Editor: Level Design Fora do Código</h2>
+                <div class="grid-2">
+                    <div class="card">
+                        <h3>Mapas e Camadas (<code>.tmj</code>)</h3>
+                        <ul>
+                            <li><strong>Tiles de 8×8 px</strong>, mapas finitos com tileset incorporado: Floresta <code>1000×200</code> tiles (8000×1600 px) e Caverna <code>500×200</code> tiles (4000×1600 px).</li>
+                            <li><strong>Camadas visuais</strong> (<code>Camada de Blocos 1</code>, <code>decoracao</code>): só desenho.</li>
+                            <li><strong>Camada <code>solidos</code>:</strong> só colisão, nunca é desenhada. Pintar um tile ali cria chão, parede ou rampa.</li>
+                            <li><strong>Camada de objetos:</strong> pontos e retângulos com <strong>nome</strong>, lidos pelo jogo.</li>
+                        </ul>
+                    </div>
+                    <div class="card">
+                        <h3>Objetos Nomeados = Comportamento</h3>
+                        <table>
+                            <tr><td><code>player-spawn</code></td><td>posição inicial</td></tr>
+                            <tr><td><code>esqueleto-spawn</code> · <code>lobo-spawn</code></td><td>1 inimigo por ponto (Caverna: 21 esqueletos)</td></tr>
+                            <tr><td><code>guardiao-spawn</code> · <code>lich-spawn</code></td><td>posição dos chefes</td></tr>
+                            <tr><td><code>pocao-vida</code> · <code>pocao-mana</code> · <code>asas</code> · <code>chave</code></td><td>item coletável</td></tr>
+                            <tr><td><code>corvo-spawn</code> + <code>corvo-fim</code></td><td>zonas de voo dos corvos</td></tr>
+                            <tr><td><code>fim-level</code></td><td>saída da fase</td></tr>
+                        </table>
+                    </div>
+                </div>
+            </div>
+            <div style="text-align: right; font-size: 1rem; color: var(--muted);">Slide 8 de 15</div>
+        </section>
+
+        <!-- SLIDE 9 -->
+        <section class="slide compact">
+            <div>
+                <h2>8. Do <code>.tmj</code> ao Jogo: Pipeline de Carregamento</h2>
+                <pre>fetch(level.arquivo)  →  JSON do Tiled
+ ├─ VISUAL    camadas visíveis ≠ "solidos"
+ │            → decodifica o GID (ID + flags de espelhamento)
+ │            → desenha em canvas de 1024×1024 px → loadSprite() de cada chunk
+ ├─ COLISÃO   camada "solidos" → máscara 0/1
+ │            → extrairRampas()  : escadas viram polígonos inclinados
+ │            → mesclarSolidos() : o resto vira retângulos grandes
+ │            → corpos estáticos com a tag "ground"
+ └─ OBJETOS   lerObjetos() → spawns, itens, zonas de corvo e fim-level</pre>
+                <ul style="margin-top: 1rem;">
+                    <li><strong>GID do Tiled:</strong> ID real = <code>gidBruto &amp; 0x1FFFFFFF</code>; os 3 bits mais altos são os espelhamentos <strong>horizontal, vertical e diagonal</strong>, refeitos no canvas.</li>
+                    <li><strong>Mesclagem:</strong> varre linha por linha; um chão de 1000×2 tiles vira <strong>1 retângulo em vez de 2000 objetos</strong>.</li>
+                    <li><strong>Chunks de 1024 px</strong> (limite do atlas do Kaboom: 2048) e <strong>cache por level</strong> evitam refazer o mapa a cada morte.</li>
+                </ul>
+            </div>
+            <div style="text-align: right; font-size: 1rem; color: var(--muted);">Slide 9 de 15</div>
+        </section>
+
+        <!-- SLIDE 10 -->
+        <section class="slide compact">
+            <div>
+                <h2>9. Modelo Matemático das Rampas (1/2): Detectando Escadas</h2>
+                <p>O Tiled só pinta quadrados, mas o personagem precisa subir inclinações suavemente. A "escada" da colisão é convertida em rampa por um modelo geométrico:</p>
+                <ul style="margin-top: 0.8rem;">
+                    <li><strong>Perfil do terreno:</strong> para cada coluna <code>c</code>, <code>topo[c]</code> é a primeira linha sólida, de cima para baixo.</li>
+                    <li><strong>Degrau:</strong> colunas vizinhas formam um degrau quando</li>
+                </ul>
+                <div class="formula">0 &lt; | topo[c] − topo[c−1] | ≤ D        D = ⌊ maxDegrau / tileH ⌋ = ⌊ 16 / 8 ⌋ = 2 tiles</div>
+                <ul>
+                    <li>Colunas marcadas e contíguas formam uma <strong>região de rampa</strong>. Degraus maiores que <code>D</code> continuam como parede.</li>
+                    <li><strong>Vértices:</strong> cada patamar (colunas com o mesmo <code>topo</code>) gera <code>(x_início, y)</code> e <code>(x_fim, y)</code>; nas junções as pontas recuam <code>tileW/2</code>, transformando a quina em trecho diagonal.</li>
+                    <li>Resultado: uma <strong>polilinha</strong> <code>P₀, P₁, …, Pₙ</code> sobre a escada. Ativada por <code>rampas: { maxDegrau: 16 }</code> em <code>levels.js</code>.</li>
+                </ul>
+            </div>
+            <div style="text-align: right; font-size: 1rem; color: var(--muted);">Slide 10 de 15</div>
+        </section>
+
+        <!-- SLIDE 11 -->
+        <section class="slide compact">
+            <div>
+                <h2>10. Modelo Matemático das Rampas (2/2): Simplificação e Colisão</h2>
+                <div class="grid-2">
+                    <div>
+                        <p><strong>Douglas-Peucker</strong> reduz a polilinha. Distância de cada ponto <code>Pₖ</code> à reta entre o primeiro e o último:</p>
+                        <div class="formula">dₖ = | Δy·(xₖ − x₁) − Δx·(yₖ − y₁) | / √(Δx² + Δy²)<br>Δx = x₂ − x₁ , Δy = y₂ − y₁</div>
+                        <ul>
+                            <li>Se <code>max dₖ ≤ ε = tileH/2 = 4 px</code>: vira <strong>um segmento reto</strong>.</li>
+                            <li>Senão: divide no ponto mais distante e repete nos dois lados (recursão).</li>
+                        </ul>
+                    </div>
+                    <div class="card">
+                        <svg viewBox="0 0 260 150" width="100%" style="max-width:300px" xmlns="http://www.w3.org/2000/svg" aria-label="Escada simplificada em rampa">
+                            <polyline points="10,130 10,110 50,110 50,90 90,90 90,70 130,70 130,50 170,50 170,30 250,30" fill="none" stroke="#8c8577" stroke-width="2" stroke-dasharray="4 3"/>
+                            <polygon points="10,110 250,30 250,145 10,145" fill="rgba(194,163,83,0.18)" stroke="#c2a353" stroke-width="2"/>
+                            <circle cx="10" cy="110" r="3.5" fill="#64ffda"/><circle cx="250" cy="30" r="3.5" fill="#64ffda"/>
+                            <text x="14" y="104" font-size="10" fill="#64ffda" font-family="Fira Code, monospace">(xₐ, yₐ)</text>
+                            <text x="178" y="24" font-size="10" fill="#64ffda" font-family="Fira Code, monospace">(x_b, y_b)</text>
+                            <text x="60" y="140" font-size="10" fill="#d3cbb8" font-family="Fira Code, monospace">trapézio convexo</text>
+                        </svg>
+                        <ul style="margin-top: 0.6rem;">
+                            <li>Cada segmento vira um <strong>trapézio convexo</strong>, com inclinação <code>m = (y_b − yₐ) / (x_b − xₐ)</code>.</li>
+                            <li>Fundo do polígono: <code>max(yₐ, y_b) + 2·tileH</code>.</li>
+                        </ul>
+                    </div>
+                </div>
+                <ul style="margin-top: 0.8rem;">
+                    <li><strong>No jogo:</strong> corpo estático <code>area({ shape: new Polygon(...) })</code> com a tag <code>ground</code>, igual ao chão comum; esqueletos, Lich e jogador reagem sem código extra.</li>
+                    <li><strong><code>hitboxEstreita</code>:</strong> tronco largo e pés estreitos, para o jogador não ficar "no ar" pela quina da caixa na rampa.</li>
+                </ul>
+            </div>
+            <div style="text-align: right; font-size: 1rem; color: var(--muted);">Slide 11 de 15</div>
+        </section>
+
+        <!-- SLIDE 12 -->
+        <section class="slide compact">
+            <div>
+                <h2>11. Mecânicas do Jogador e Itens</h2>
+                <table>
+                    <thead><tr><th>Mecânica</th><th>Valor / Regra</th></tr></thead>
+                    <tbody>
+                        <tr><td>Caminhada</td><td>200 px/s</td></tr>
+                        <tr><td>Espada (lateral e golpe para baixo / <em>pogo jump</em>)</td><td>dano 5</td></tr>
+                        <tr><td>Bola de fogo</td><td>dano 3 · custo 5 de mana · 560 px/s · alcance 900 px</td></tr>
+                        <tr><td>Mana máxima</td><td>100, ou seja, <strong>20 bolas de fogo</strong> até esvaziar</td></tr>
+                        <tr><td>Poção de vida / Poção de mana</td><td>restauram vida / mana (tecla <code>S</code>)</td></tr>
+                        <tr><td>Asas</td><td>voo por tempo limitado (infinito no <code>godmod</code>)</td></tr>
+                        <tr><td>Chave</td><td>obrigatória para abrir a saída da Floresta</td></tr>
+                        <tr><td>Cronômetro (HUD)</td><td>só tempo ativo (pausa no <code>ESC</code>); vai para o ranking</td></tr>
+                    </tbody>
+                </table>
+                <ul style="margin-top: 1rem;">
+                    <li><strong>Itens por dados:</strong> <code>itens.js</code> é uma tabela <code>nome → { tipo, sprite, escala }</code>; item novo = sprite + uma linha.</li>
+                    <li><strong>Balanceamento central:</strong> todos os números de combate ficam em <code>balanceamento.js</code>.</li>
+                </ul>
+            </div>
+            <div style="text-align: right; font-size: 1rem; color: var(--muted);">Slide 12 de 15</div>
+        </section>
+
+        <!-- SLIDE 13 -->
+        <section class="slide compact">
+            <div>
+                <h2>12. Inimigos Comuns e Inteligência Artificial</h2>
+                <div class="grid-2">
+                    <div class="card">
+                        <h3>Esqueletos e Lobos</h3>
+                        <ul>
+                            <li><strong>Esqueleto</strong> (vida 5): patrulha e <strong>sonda o chão à frente</strong> para não cair em buracos; espada derruba em 1 golpe, bola de fogo em 2.</li>
+                            <li>Ao morrer vira <strong>pilha de ossos</strong> e <strong>ressuscita</strong> depois de um tempo.</li>
+                            <li><strong>Lobo</strong> (vida 5): persegue o jogador, com sons próprios de ataque e morte.</li>
+                        </ul>
+                    </div>
+                    <div class="card">
+                        <h3>Corvos: Voo Senoidal</h3>
+                        <div class="formula">y(x) = y₀ + A · sen(2π·x / λ)<br>A = 110 px · λ = 480 px · v = 150 px/s<br>T = λ / v = 480 / 150 = 3,2 s</div>
+                        <ul>
+                            <li>Nascem em <code>corvo-spawn</code> e somem em <code>corvo-fim</code> (retângulos do Tiled), a cada 1 a 3 s, no máximo 6 juntos.</li>
+                            <li>Passam <strong>atrás da folhagem</strong> (<code>z = -55</code>, mapa em <code>-50</code>); dano 20 ao explodir no jogador.</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+            <div style="text-align: right; font-size: 1rem; color: var(--muted);">Slide 13 de 15</div>
+        </section>
+
+        <!-- SLIDE 14 -->
+        <section class="slide compact">
+            <div>
+                <h2>13. Chefes: Guardião Mascarado e Lich</h2>
+                <div class="grid-2">
+                    <div class="card">
+                        <h3>Guardião Mascarado (vida 60)</h3>
+                        <ul>
+                            <li><strong>Fase 1:</strong> corre a 170 px/s (jogador: 200), acorda a 520 px; espadada de dano 30.</li>
+                            <li><strong>Fase 2</strong> (a 50% da vida): perde a máscara, sobe para 235 px/s e combina <strong>espadada</strong> (jogador a menos de 160 px) com <strong>salto</strong>.</li>
+                            <li><strong>Salto:</strong> agacha 0,4 s como aviso; altura pela física:</li>
+                        </ul>
+                        <div class="formula">h = F² / (2g) = 1160² / (2·2400) ≈ 280 px</div>
+                        <ul><li>Pouso: dano 40, tremor de tela e área de impacto nos pés.</li></ul>
+                    </div>
+                    <div class="card">
+                        <h3>Lich (chefe final, vida 80)</h3>
+                        <ul>
+                            <li>80 de vida = <strong>16 golpes de espada</strong>.</li>
+                            <li>Projéteis teleguiados e <strong>raios com aviso visual</strong> antes do impacto.</li>
+                            <li>O raio parte do alto e <strong>para no primeiro bloco acima do jogador</strong>: as plataformas servem de abrigo; sem bloco, desce até o chão.</li>
+                            <li>Ao morrer: esqueletos destruídos, jogo encerra e a <strong>tela de vitória</strong> leva ao menu.</li>
+                        </ul>
+                    </div>
+                </div>
+                <p style="margin-top: 0.8rem;">Os dois chefes usam a mesma <strong>barra de vida</strong> (<code>criarBarraChefe</code> em <code>ui.js</code>).</p>
+            </div>
+            <div style="text-align: right; font-size: 1rem; color: var(--muted);">Slide 14 de 15</div>
+        </section>
+
+        <!-- SLIDE 15 -->
+        <section class="slide compact">
+            <div>
+                <h2>14. Progressão das Fases e Configuração por Dados</h2>
+                <pre>Menu → level-1 (Floresta) → pega a chave → entra em "fim-level" → level-2 (Caverna)
+                                                                          │
+       Menu ← tela de vitória ← esqueletos destruídos ← derrota o Lich ──┘</pre>
+                <ul style="margin-top: 1rem;">
+                    <li><strong><code>levels.js</code> descreve cada fase por campos</strong>, sem código novo: <code>arquivo</code>, <code>camadasSolidas</code>, <code>musica</code>, <code>fundo</code>, <code>rampas</code>, <code>hitboxEstreita</code>, <code>exigeChave</code>, <code>proximoLevel</code>, <code>fimAoDerrotarLich</code>.</li>
+                    <li><strong>Fase nova</strong> = salvar o <code>.tmj</code> + uma entrada em <code>LEVELS</code>; o jogo segue a cadeia de <code>proximoLevel</code> a partir de <code>LEVEL_PADRAO</code>.</li>
+                    <li><strong>Tempo acumulado</strong> atravessa as fases e, no fim, é enviado a <code>POST /api/score</code> (ranking Top 10).</li>
+                    <li><strong>Interface temática</strong> (<code>ui.js</code>): fontes <em>Gloock</em> e <em>Pixelify Sans</em>, textos flutuantes de dano, brasas, menus e telas finais.</li>
+                    <li><strong>Modo teste <code>godmod</code>:</strong> imortalidade e voo infinito.</li>
+                </ul>
+            </div>
+            <div style="text-align: right; font-size: 1rem; color: var(--muted);">Slide 15 de 15</div>
         </section>
     </div>
 
     <footer class="controls">
         <button class="btn" id="prevBtn">◀ Anterior</button>
-        <span class="counter" id="slideCounter">1 / 7</span>
+        <span class="counter" id="slideCounter">1 / 15</span>
         <button class="btn" id="nextBtn">Próximo ▶</button>
     </footer>
 
