@@ -1,0 +1,306 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Apresentação Técnica - DEVES: O Despertar do Mago</title>
+    <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@600;700&family=Crimson+Text:wght@400;600&family=Fira+Code:wght@400;500&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg-dark: #0a0a0c;
+            --panel: #161513;
+            --gold: #c2a353;
+            --gold-light: #e8d08b;
+            --blood: #7a1717;
+            --text: #d3cbb8;
+            --muted: #8c8577;
+            --teal: #64ffda;
+        }
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body {
+            background: radial-gradient(circle at 50% 30%, #1c1a17 0%, #0a0a0c 85%);
+            color: var(--text);
+            font-family: 'Crimson Text', serif;
+            height: 100vh;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+        }
+        .deck {
+            flex: 1;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 2rem;
+        }
+        .slide {
+            display: none;
+            width: 100%;
+            max-width: 1080px;
+            min-height: 580px;
+            background: linear-gradient(135deg, #1b1916, #0f0e0d);
+            border: 2px solid var(--gold);
+            border-radius: 6px;
+            padding: 3rem 3.5rem;
+            box-shadow: 0 20px 50px rgba(0,0,0,0.85), inset 0 0 35px rgba(194,163,83,0.08);
+            flex-direction: column;
+            justify-content: space-between;
+        }
+        .slide.active { display: flex; }
+        h1, h2, h3 { font-family: 'Cinzel', serif; color: var(--gold); }
+        h1 { font-size: 3rem; text-align: center; margin-bottom: 0.5rem; }
+        h2 {
+            font-size: 2rem;
+            border-bottom: 2px solid rgba(194,163,83,0.35);
+            padding-bottom: 0.7rem;
+            margin-bottom: 1.5rem;
+        }
+        p, li { font-size: 1.3rem; line-height: 1.55; }
+        ul { margin-left: 1.5rem; }
+        li { margin-bottom: 0.65rem; }
+        strong { color: var(--gold-light); }
+        code, pre {
+            font-family: 'Fira Code', monospace;
+            font-size: 0.95rem;
+            background: rgba(0,0,0,0.65);
+            color: var(--teal);
+        }
+        code { padding: 0.15rem 0.4rem; border-radius: 3px; }
+        pre {
+            padding: 1rem 1.2rem;
+            border-left: 3px solid var(--gold);
+            overflow-x: auto;
+            line-height: 1.4;
+        }
+        .grid-2 {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1.5rem;
+        }
+        .card {
+            background: rgba(0,0,0,0.4);
+            border: 1px solid rgba(194,163,83,0.35);
+            padding: 1.1rem 1.3rem;
+            border-radius: 4px;
+        }
+        .card h3 { font-size: 1.25rem; margin-bottom: 0.5rem; }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 1.05rem;
+        }
+        th, td {
+            border: 1px solid #332b1a;
+            padding: 0.6rem 0.8rem;
+            text-align: left;
+        }
+        th {
+            background: #1a1713;
+            color: var(--gold);
+            font-family: 'Cinzel', serif;
+        }
+        .controls {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 1rem 3rem;
+            background: #121110;
+            border-top: 1px solid #332b1a;
+        }
+        .btn {
+            background: linear-gradient(to bottom, var(--blood), #4a0c0c);
+            color: var(--gold-light);
+            border: 1px solid var(--gold);
+            padding: 0.5rem 1.4rem;
+            font-family: 'Cinzel', serif;
+            font-size: 1rem;
+            cursor: pointer;
+        }
+        .btn:hover { background: #a11f1f; color: #fff; }
+        .counter { font-family: 'Cinzel', serif; color: var(--gold); font-size: 1.1rem; }
+    </style>
+</head>
+<body>
+    <div class="deck">
+        <!-- SLIDE 1 -->
+        <section class="slide active">
+            <div style="margin: auto 0; text-align: center;">
+                <p style="letter-spacing: 3px; color: var(--muted); text-transform: uppercase; margin-bottom: 1rem;">Apresentação Técnica de Arquitetura e Código</p>
+                <h1>DEVES: O Despertar do Mago</h1>
+                <p style="font-size: 1.6rem; color: var(--gold-light); margin-top: 0.8rem;">Jogo 2D Dark Fantasy + Portal Web Full-Stack com ORM</p>
+                <div style="width: 240px; height: 3px; background: var(--gold); margin: 2rem auto;"></div>
+                <p style="color: var(--muted);">Use as setas <code>←</code> <code>→</code> do teclado ou os botões abaixo para navegar</p>
+            </div>
+            <div style="text-align: center; font-size: 1rem; color: var(--muted);">Slide 1 de 7</div>
+        </section>
+
+        <!-- SLIDE 2 -->
+        <section class="slide">
+            <div>
+                <h2>1. Linguagens e Tecnologias Utilizadas</h2>
+                <div class="grid-2">
+                    <div class="card">
+                        <h3>JavaScript (ES6+ & Node.js)</h3>
+                        <ul>
+                            <li><strong>Frontend Jogo (ES Modules):</strong> Cenas, física, IA dos chefes e HUD em tempo real.</li>
+                            <li><strong>Portal Web:</strong> Autenticação, monitoramento de sessão e consumo de APIs via <code>fetch</code>.</li>
+                            <li><strong>Backend (Node.js + Express 5):</strong> Servidor HTTP unificado e gerenciamento de sessões.</li>
+                        </ul>
+                    </div>
+                    <div class="card">
+                        <h3>Banco de Dados, Motor 2D e Ferramentas</h3>
+                        <ul>
+                            <li><strong>PostgreSQL 15 + Docker:</strong> Persistência relacional de usuários e speedruns.</li>
+                            <li><strong>Camada ORM Própria:</strong> Mapeamento Objeto-Relacional sobre o driver <code>pg</code>.</li>
+                            <li><strong>Kaboom.js (v3000) & Tiled (.tmj):</strong> Motor 2D, colisões poligonais e mapas modulares.</li>
+                            <li><strong>Bcrypt:</strong> Hash seguro de senhas.</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+            <div style="text-align: right; font-size: 1rem; color: var(--muted);">Slide 2 de 7</div>
+        </section>
+
+        <!-- SLIDE 3 -->
+        <section class="slide">
+            <div>
+                <h2>2. Estrutura Modular do Projeto</h2>
+                <pre>
+Castlevania-kaboom/
+├── server.js                   # Servidor Express + Rotas REST + Controle de Sessão
+├── database/
+│   ├── orm.js                  # Motor ORM (Model, DataTypes, Op, sync, CRUD)
+│   └── models/                 # Modelos User.js, Score.js e index.js
+├── web/
+│   ├── pages/                  # login.html, register.html, dashboard.html, play.html
+│   ├── js/portal-auth.js       # Autenticação, Heartbeat 3s, Timeout 2min, Ranking e Admin
+│   └── css/                    # Estilização temática (portal.css, game-container.css)
+└── frontend/js/
+    ├── main.js / levels.js     # Inicialização Kaboom.js, assets e encadeamento de fases
+    ├── mapa.js / ui.js         # Chunks 1024px, rampas poligonais e textos flutuantes
+    ├── cenas/                  # menu.js, game.js, inventario.js
+    └── entidades/              # jogador.js, guardiao.js, lich.js, esqueletos.js, lobo.js, corvos.js</pre>
+            </div>
+            <div style="text-align: right; font-size: 1rem; color: var(--muted);">Slide 3 de 7</div>
+        </section>
+
+        <!-- SLIDE 4 -->
+        <section class="slide">
+            <div>
+                <h2>3. Camada ORM e Modelos de Dados</h2>
+                <p style="margin-bottom: 1rem;">Implementada em <code>database/orm.js</code> e <code>database/models/</code> para abstrair consultas SQL e proteger dados:</p>
+                <div class="grid-2">
+                    <div class="card">
+                        <h3>Recursos do ORM</h3>
+                        <ul>
+                            <li>Sincronização automática de tabelas e colunas (<code>orm.sync()</code>).</li>
+                            <li>Métodos <code>create()</code>, <code>findOne()</code>, <code>findAll()</code>, <code>update()</code> e <code>destroy()</code>.</li>
+                            <li>Consultas parametrizadas (<code>$1, $2...</code>) contra SQL Injection e suporte a <code>Op.or</code>.</li>
+                        </ul>
+                    </div>
+                    <div class="card">
+                        <h3>Modelos Mapeados</h3>
+                        <ul>
+                            <li><strong>User (<code>users</code>):</strong> <code>id</code>, <code>username</code>, <code>email</code>, <code>password_hash</code>, <code>password_plain</code>, <code>created_at</code>.</li>
+                            <li><strong>Score (<code>scores</code>):</strong> <code>id</code>, <code>username</code>, <code>status</code>, <code>tempo_segundos</code>, <code>criado_em</code>.</li>
+                            <li><strong>Segurança Git:</strong> <code>.gitignore</code> bloqueia volumes e dados de usuários.</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+            <div style="text-align: right; font-size: 1rem; color: var(--muted);">Slide 4 de 7</div>
+        </section>
+
+        <!-- SLIDE 5 -->
+        <section class="slide">
+            <div>
+                <h2>4. Arquitetura das APIs RESTful (<code>server.js</code>)</h2>
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Método</th>
+                            <th>Endpoint</th>
+                            <th>Responsabilidade</th>
+                            <th>Integração ORM / Memória</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr><td><code>POST</code></td><td><code>/api/register</code></td><td>Cadastro com validação e hash Bcrypt</td><td><code>User.findOne</code> / <code>User.create</code></td></tr>
+                        <tr><td><code>POST</code></td><td><code>/api/login</code></td><td>Autenticação e emissão de token de sessão</td><td><code>User.findOne</code> / <code>user.update</code></td></tr>
+                        <tr><td><code>POST</code></td><td><code>/api/session/check</code></td><td>Heartbeat de sessão ativa e detecção de reinício</td><td><code>SERVER_BOOT_ID</code> + <code>activeSessions</code></td></tr>
+                        <tr><td><code>POST</code></td><td><code>/api/score</code></td><td>Salva tempo da partida (Vitória ou Derrota)</td><td><code>Score.create</code></td></tr>
+                        <tr><td><code>GET</code></td><td><code>/api/scores</code></td><td>Ranking Top 10 Melhores Tempos (Speedruns)</td><td><code>Score.findAll (VITORIA, ASC)</code></td></tr>
+                        <tr><td><code>GET</code></td><td><code>/api/scores/user/:u</code></td><td>Histórico das últimas 5 partidas do jogador</td><td><code>Score.findAll (LIMIT 5)</code></td></tr>
+                        <tr><td><code>GET</code></td><td><code>/api/admin/users</code></td><td>Lista usuários cadastrados (restrito a <code>overlord 1</code>)</td><td><code>User.findAll</code> + RBAC Token</td></tr>
+                    </tbody>
+                </table>
+            </div>
+            <div style="text-align: right; font-size: 1rem; color: var(--muted);">Slide 5 de 7</div>
+        </section>
+
+        <!-- SLIDE 6 -->
+        <section class="slide">
+            <div>
+                <h2>5. Segurança de Sessão e Controle de Acesso</h2>
+                <ul>
+                    <li><strong>Invalidação ao Fechar o Servidor (<code>SERVER_BOOT_ID</code>):</strong> Cada inicialização gera um UUID exclusivo em memória. O heartbeat de 3s em <code>portal-auth.js</code> detecta imediatamente se o servidor caiu ou reiniciou, encerrando o jogo e exigindo novo login.</li>
+                    <li><strong>Tolerância de 2 Minutos com Aba Fechada:</strong> Ao fechar a aba (<code>pagehide</code> / <code>beforeunload</code>), o instante é salvo via <code>sendBeacon</code>. Se reabrir em até 2 minutos, permanece logado; após 2 minutos, a sessão expira automaticamente.</li>
+                    <li><strong>Administrador Exclusivo (<code>overlord 1</code>):</strong> Apenas o usuário <code>overlord 1</code> tem permissão no backend (HTTP 200 vs 403) e no frontend para visualizar o painel de usuários cadastrados.</li>
+                </ul>
+            </div>
+            <div style="text-align: right; font-size: 1rem; color: var(--muted);">Slide 6 de 7</div>
+        </section>
+
+        <!-- SLIDE 7 -->
+        <section class="slide">
+            <div>
+                <h2>6. Estrutura do Motor de Jogo (Kaboom.js)</h2>
+                <div class="grid-2">
+                    <div class="card">
+                        <h3>Mapas, Física e Progressão</h3>
+                        <ul>
+                            <li><strong>Renderização por Chunks:</strong> Camadas do Tiled desenhadas em blocos de <code>1024px</code> para alta taxa de FPS.</li>
+                            <li><strong>Colisões Inteligentes:</strong> Mesclagem de blocos sólidos e extração automática de rampas suaves.</li>
+                            <li><strong>2 Fases Conectadas:</strong> Floresta (Guardião Mascarado + Chave) → Caverna (Lich).</li>
+                        </ul>
+                    </div>
+                    <div class="card">
+                        <h3>Combate, Cronômetro e Testes</h3>
+                        <ul>
+                            <li><strong>Cronômetro HUD:</strong> Conta apenas tempo ativo (<code>MM:SS</code>) e sincroniza ao final com a API.</li>
+                            <li><strong>Inventário Dinâmico:</strong> Poção de Vida, Poção de Mana, Asas e Chave.</li>
+                            <li><strong>Modo Teste (<code>godmod</code>):</strong> Digitar <code>godmod</code> ativa imortalidade e voo infinito desde o início.</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+            <div style="text-align: right; font-size: 1rem; color: var(--muted);">Slide 7 de 7</div>
+        </section>
+    </div>
+
+    <footer class="controls">
+        <button class="btn" id="prevBtn">◀ Anterior</button>
+        <span class="counter" id="slideCounter">1 / 7</span>
+        <button class="btn" id="nextBtn">Próximo ▶</button>
+    </footer>
+
+    <script>
+        const slides = document.querySelectorAll('.slide');
+        const counter = document.getElementById('slideCounter');
+        let current = 0;
+
+        function showSlide(index) {
+            current = (index + slides.length) % slides.length;
+            slides.forEach((s, i) => s.classList.toggle('active', i === current));
+            counter.textContent = `${current + 1} / ${slides.length}`;
+        }
+
+        document.getElementById('prevBtn').addEventListener('click', () => showSlide(current - 1));
+        document.getElementById('nextBtn').addEventListener('click', () => showSlide(current + 1));
+        window.addEventListener('keydown', (e) => {
+            if (e.key === 'ArrowRight' || e.key === ' ') showSlide(current + 1);
+            if (e.key === 'ArrowLeft') showSlide(current - 1);
+        });
+    </script>
+</body>
+</html>
