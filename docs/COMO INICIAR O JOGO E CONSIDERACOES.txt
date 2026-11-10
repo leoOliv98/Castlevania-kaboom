@@ -1,0 +1,10 @@
+Para iniciar o jogo:
+- Rodar o Docker, porta 5433
+- npm start
+- Criar um usuário e depois logar
+
+Explicações e Considerações:
+- São duas fases, 2 chefes;
+- A página registra o tempo que o jogador levou para terminar o jogo; É preciso voltar uma tela para poder ver a lista dos melhores tempos;
+- As imagens foram geradas com IA, mas algumas foram editadas manualmente para ficarem em conformidade com as telas do jogo;
+- Os mapas foram desenhados inteiramente manual, pelo Tiled Editor; Mas foi necessária a IA para implementar algumas lógicas (como rampas)
